@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0d1f3c 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: white;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 40px;
+            font-size: 1rem;
+        }
+        .subtitle a {
+            color: #00d9ff;
+            text-decoration: none;
+        }
+        .comparison {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .tool {
+            flex: 1;
+            min-width: 350px;
+            max-width: 550px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .tool.repomix { border-top: 4px solid #ff6b6b; }
+        .tool.command-center { border-top: 4px solid #00ff88; }
+        .tool-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .tool-icon {
+            font-size: 2.5rem;
+        }
+        .tool-name {
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+        .tool-tagline {
+            font-size: 0.85rem;
+            opacity: 0.6;
+            margin-top: 4px;
+        }
+        .source-link {
+            font-size: 0.75rem;
+            color: #00d9ff;
+            text-decoration: none;
+            opacity: 0.8;
+        }
+        .features {
+            list-style: none;
+        }
+        .features li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.95rem;
+        }
+        .features li:last-child { border-bottom: none; }
+        .features .icon { font-size: 1.1rem; min-width: 24px; }
+        .features .text { flex: 1; }
+        .features .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            opacity: 0.4;
+            display: block;
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+        }
+        .features .value {
+            color: rgba(255,255,255,0.9);
+        }
+        .features .highlight-green { color: #00ff88; font-weight: 600; }
+        .features .highlight-red { color: #ff6b6b; font-weight: 600; }
+        .check { color: #00ff88; }
+        .cross { color: #ff6b6b; }
+        
+        .vs-section {
+            margin-top: 50px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 30px;
+        }
+        .vs-section h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.4rem;
+            color: rgba(255,255,255,0.9);
+        }
+        .vs-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .vs-table th, .vs-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .vs-table th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.5;
+            font-weight: 500;
+        }
+        .vs-table td:first-child {
+            font-weight: 500;
+            color: rgba(255,255,255,0.7);
+        }
+        .vs-table .repomix-col { color: #ff9999; }
+        .vs-table .cc-col { color: #88ffbb; }
+        
+        .workflow-section {
+            margin-top: 40px;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .workflow-box {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .workflow-box h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .workflow-box.repomix h3 { color: #ff9999; }
+        .workflow-box.cc h3 { color: #88ffbb; }
+        .workflow-steps {
+            list-style: none;
+            counter-reset: step;
+        }
+        .workflow-steps li {
+            counter-increment: step;
+            padding: 8px 0;
+            padding-left: 35px;
+            position: relative;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .workflow-steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            width: 24px;
+            height: 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .token-section {
+            margin-top: 40px;
+            background: linear-gradient(135deg, rgba(255,107,107,0.1), rgba(0,255,136,0.1));
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+        }
+        .token-section h2 {
+            margin-bottom: 25px;
+            font-size: 1.3rem;
+        }
+        .token-bars {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 80px;
+            height: 180px;
+            margin-bottom: 20px;
+        }
+        .token-bar {
+            text-align: center;
+        }
+        .token-bar .bar {
+            width: 100px;
+            border-radius: 10px 10px 0 0;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .token-bar.repomix .bar {
+            height: 160px;
+            background: linear-gradient(180deg, #ff6b6b, #cc4444);
+            color: white;
+        }
+        .token-bar.cc .bar {
+            height: 25px;
+            background: linear-gradient(180deg, #00ff88, #00cc66);
+            color: #003322;
+        }
+        .token-bar .label {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        .token-bar .subtext {
+            font-size: 0.75rem;
+            opacity: 0.5;
+            margin-top: 5px;
+        }
+        .savings {
+            margin-top: 20px;
+            padding: 15px 30px;
+            background: rgba(0,255,136,0.15);
+            border-radius: 10px;
+            display: inline-block;
+            font-size: 1.1rem;
+        }
+        .savings strong {
+            color: #00ff88;
+        }
+        
+        .use-case-section {
+            margin-top: 40px;
+        }
+        .use-case-section h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.3rem;
+        }
+        .use-cases {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .use-case {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 20px;
+            flex: 1;
+            min-width: 280px;
+            max-width: 350px;
+        }
+        .use-case h4 {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        .use-case p {
+            font-size: 0.85rem;
+            opacity: 0.6;
+            line-height: 1.5;
+        }
+        .use-case.repomix { border-left: 3px solid #ff6b6b; }
+        .use-case.cc { border-left: 3px solid #00ff88; }
+        .use-case .tool-badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .use-case.repomix .tool-badge { background: rgba(255,107,107,0.2); color: #ff9999; }
+        .use-case.cc .tool-badge { background: rgba(0,255,136,0.2); color: #88ffbb; }
+        
+        .bottom-line {
+            margin-top: 40px;
+            text-align: center;
+            padding: 30px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 15px;
+        }
+        .bottom-line h2 {
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+        }
+        .bottom-line p {
+            font-size: 1rem;
+            opacity: 0.8;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .bottom-line .highlight {
+            color: #00ff88;
+            font-weight: 600;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.4;
+        }
+        .footer a {
+            color: #00d9ff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 Repomix vs 🎯 Command Center</h1>
+        <p class="subtitle">
+            Research-based comparison | Sources: 
+            <a href="https://repomix.com" target="_blank">repomix.com</a>, 
+            <a href="https://github.com/yamadashy/repomix" target="_blank">GitHub</a>
+        </p>
+        
+        <div class="comparison">
+            <!-- Repomix -->
+            <div class="tool repomix">
+                <div class="tool-header">
+                    <div class="tool-icon">📦</div>
+                    <div>
+                        <div class="tool-name">Repomix</div>
+                        <div class="tool-tagline">Pack codebase into AI-friendly files</div>
+                        <a href="https://repomix.com" class="source-link">repomix.com ↗</a>
+                    </div>
+                </div>
+                <ul class="features">
+                    <li>
+                        <span class="icon">📄</span>
+                        <div class="text">
+                            <span class="label">Output Formats</span>
+                            <span class="value">XML, Markdown, JSON, Plain text</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🎯</span>
+                        <div class="text">
+                            <span class="label">Target AI</span>
+                            <span class="value">Any LLM (ChatGPT, Claude, Gemini, etc.)</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🔐</span>
+                        <div class="text">
+                            <span class="label">Security</span>
+                            <span class="value"><span class="check">✓</span> Secretlint detects secrets/keys</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🌳</span>
+                        <div class="text">
+                            <span class="label">Code Compression</span>
+                            <span class="value"><span class="check">✓</span> Tree-sitter (~70% token reduction)</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🔢</span>
+                        <div class="text">
+                            <span class="label">Token Counting</span>
+                            <span class="value"><span class="check">✓</span> Per-file and total counts</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🌐</span>
+                        <div class="text">
+                            <span class="label">Remote Repos</span>
+                            <span class="value"><span class="check">✓</span> GitHub URL support</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🔌</span>
+                        <div class="text">
+                            <span class="label">Claude Integration</span>
+                            <span class="value"><span class="check">✓</span> MCP server, plugins</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">📊</span>
+                        <div class="text">
+                            <span class="label">Multi-Repo</span>
+                            <span class="value"><span class="cross">✗</span> One repo at a time</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Command Center -->
+            <div class="tool command-center">
+                <div class="tool-header">
+                    <div class="tool-icon">🎯</div>
+                    <div>
+                        <div class="tool-name">Command Center</div>
+                        <div class="tool-tagline">Multi-repo workspaces for Cursor</div>
+                        <a href="https://github.com/lionelresnik/cursor-command-center" class="source-link">GitHub ↗</a>
+                    </div>
+                </div>
+                <ul class="features">
+                    <li>
+                        <span class="icon">📄</span>
+                        <div class="text">
+                            <span class="label">Output Format</span>
+                            <span class="value">.code-workspace files</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🎯</span>
+                        <div class="text">
+                            <span class="label">Target AI</span>
+                            <span class="value">Cursor IDE (@Codebase)</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">📊</span>
+                        <div class="text">
+                            <span class="label">Multi-Repo</span>
+                            <span class="value"><span class="check">✓</span> Native multi-repo workspaces</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🔄</span>
+                        <div class="text">
+                            <span class="label">Auto Updates</span>
+                            <span class="value"><span class="check">✓</span> Cursor re-indexes on changes</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">✏️</span>
+                        <div class="text">
+                            <span class="label">Code Editing</span>
+                            <span class="value"><span class="check">✓</span> AI edits files directly</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🔍</span>
+                        <div class="text">
+                            <span class="label">Search</span>
+                            <span class="value"><span class="check">✓</span> Semantic search (relevant chunks)</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">📝</span>
+                        <div class="text">
+                            <span class="label">Task History</span>
+                            <span class="value"><span class="check">✓</span> Built-in knowledge base</span>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon">🔐</span>
+                        <div class="text">
+                            <span class="label">Security Scan</span>
+                            <span class="value"><span class="cross">✗</span> No built-in scanning</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="vs-section">
+            <h2>⚔️ Head-to-Head Comparison</h2>
+            <table class="vs-table">
+                <tr>
+                    <th>Aspect</th>
+                    <th>Repomix</th>
+                    <th>Command Center</th>
+                </tr>
+                <tr>
+                    <td>Approach</td>
+                    <td class="repomix-col">Static snapshot (one-time)</td>
+                    <td class="cc-col">Live workspace (continuous)</td>
+                </tr>
+                <tr>
+                    <td>Multi-repo</td>
+                    <td class="repomix-col">Manual combining</td>
+                    <td class="cc-col">Native support</td>
+                </tr>
+                <tr>
+                    <td>Updates</td>
+                    <td class="repomix-col">Re-run CLI manually</td>
+                    <td class="cc-col">Auto-indexed</td>
+                </tr>
+                <tr>
+                    <td>Code editing</td>
+                    <td class="repomix-col">Copy → Paste back</td>
+                    <td class="cc-col">AI edits directly</td>
+                </tr>
+                <tr>
+                    <td>Remote repos</td>
+                    <td class="repomix-col">✓ GitHub URL support</td>
+                    <td class="cc-col">✗ Local only</td>
+                </tr>
+                <tr>
+                    <td>Security</td>
+                    <td class="repomix-col">✓ Secretlint built-in</td>
+                    <td class="cc-col">✗ No scanning</td>
+                </tr>
+                <tr>
+                    <td>Compression</td>
+                    <td class="repomix-col">✓ Tree-sitter (~70%)</td>
+                    <td class="cc-col">Cursor's indexing</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Workflow -->
+        <div class="workflow-section">
+            <div class="workflow-box repomix">
+                <h3>📦 Repomix Workflow</h3>
+                <ol class="workflow-steps">
+                    <li>Run <code>npx repomix@latest</code></li>
+                    <li>Get <code>repomix-output.xml</code></li>
+                    <li>Copy file contents</li>
+                    <li>Paste into ChatGPT/Claude</li>
+                    <li>Get code suggestions</li>
+                    <li>Copy code back to files</li>
+                    <li>Code changed? → Step 1 again</li>
+                </ol>
+            </div>
+            <div class="workflow-box cc">
+                <h3>🎯 Command Center Workflow</h3>
+                <ol class="workflow-steps">
+                    <li>Run <code>./open.sh</code> (once)</li>
+                    <li>Select workspace</li>
+                    <li>Type <code>@Codebase</code> + question</li>
+                    <li>AI finds relevant code</li>
+                    <li>AI edits files directly</li>
+                    <li>Code changed? → Already indexed!</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Token Usage -->
+        <div class="token-section">
+            <h2>💰 Token Usage Per Query (50 repos, ~500K lines)</h2>
+            <div class="token-bars">
+                <div class="token-bar repomix">
+                    <div class="bar">~300K</div>
+                    <div class="label">Repomix</div>
+                    <div class="subtext">Full codebase dump</div>
+                </div>
+                <div class="token-bar cc">
+                    <div class="bar">~5K</div>
+                    <div class="label">Command Center</div>
+                    <div class="subtext">Relevant chunks only</div>
+                </div>
+            </div>
+            <div class="savings">
+                Command Center uses <strong>~60x fewer tokens</strong> per query
+            </div>
+        </div>
+
+        <!-- Use Cases -->
+        <div class="use-case-section">
+            <h2>🎯 When to Use Each</h2>
+            <div class="use-cases">
+                <div class="use-case repomix">
+                    <span class="tool-badge">USE REPOMIX</span>
+                    <h4>One-time Code Analysis</h4>
+                    <p>Need to analyze code with ChatGPT, Claude web, or other LLMs outside your IDE</p>
+                </div>
+                <div class="use-case repomix">
+                    <span class="tool-badge">USE REPOMIX</span>
+                    <h4>Security Audit</h4>
+                    <p>Check codebase for secrets/keys with built-in Secretlint detection</p>
+                </div>
+                <div class="use-case repomix">
+                    <span class="tool-badge">USE REPOMIX</span>
+                    <h4>Remote Repo Analysis</h4>
+                    <p>Analyze GitHub repos without cloning locally</p>
+                </div>
+                <div class="use-case cc">
+                    <span class="tool-badge">USE COMMAND CENTER</span>
+                    <h4>Daily Development</h4>
+                    <p>Continuous coding workflow with live context in Cursor IDE</p>
+                </div>
+                <div class="use-case cc">
+                    <span class="tool-badge">USE COMMAND CENTER</span>
+                    <h4>Multi-Repo Projects</h4>
+                    <p>Work across multiple related repositories simultaneously</p>
+                </div>
+                <div class="use-case cc">
+                    <span class="tool-badge">USE COMMAND CENTER</span>
+                    <h4>Token-Conscious Usage</h4>
+                    <p>Minimize API costs with semantic search vs full dumps</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Line -->
+        <div class="bottom-line">
+            <h2>🏆 Bottom Line</h2>
+            <p>
+                <strong>Repomix</strong> exports your codebase to a file for any AI tool.<br>
+                <strong>Command Center</strong> organizes repos for efficient Cursor workflows.<br><br>
+                They're <span class="highlight">complementary</span> — use Command Center for daily Cursor work,<br>
+                and Repomix when you need to analyze code outside your IDE.
+            </p>
+        </div>
+
+        <div class="footer">
+            Sources: <a href="https://repomix.com">repomix.com</a> | 
+            <a href="https://repomix.com/guide/">Getting Started</a> | 
+            <a href="https://repomix.com/guide/command-line-options">CLI Options</a> | 
+            <a href="https://github.com/yamadashy/repomix">GitHub</a>
+        </div>
+    </div>
+</body>
+</html>

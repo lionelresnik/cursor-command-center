@@ -1,0 +1,233 @@
+---
+description: Command Center rules - task tracking and cross-repo context
+alwaysApply: true
+---
+
+# 🚨 MANDATORY: Task Tracking
+
+## Step 1: ALWAYS Ask First
+
+**Before ANY work, ask the user:**
+> "Is there a Jira ticket for this? (e.g., ABC-1234, or just press Enter for none)"
+
+## Step 2: Identify the Workspace
+
+**Check which workspace is open** (look at the .code-workspace file or ask):
+- `frontend.code-workspace` → workspace is `frontend`
+- `backend.code-workspace` → workspace is `backend`
+- `all.code-workspace` → workspace is `all`
+
+If task spans multiple workspaces or is general → use `shared`
+
+## Step 3: Create Task File
+
+**Location:** `task-history/[WORKSPACE]/[TICKET]-description.md`
+
+**Examples:**
+- `task-history/frontend/ABC-1234-add-user-auth.md` (Frontend workspace)
+- `task-history/backend/fix-login-bug.md` (Backend workspace)
+- `task-history/shared/cross-repo-refactor.md` (spans multiple)
+
+**For reference docs:** `docs/[WORKSPACE]/[name].md`
+- `docs/backend/database-connection-guide.md` (Backend-specific)
+- `docs/shared/deployment-guide.md` (general)
+
+⚠️ **IMPORTANT:**
+- Tasks go in `task-history/[workspace]/`
+- Reference docs go in `docs/[workspace]/`
+- Use `shared/` for cross-workspace content
+- Create the workspace folder if it doesn't exist
+
+---
+
+## Template
+
+```markdown
+---
+date: YYYY-MM-DD HH:MM
+workspace: backend  # or "frontend", "all", "shared"
+ticket: ABC-1234  # or "none"
+repos: [repo1, repo2, repo3]
+tags: [auth, api, bugfix, docs]
+status: in_progress  # in_progress | complete | blocked
+type: task  # task | docs | investigation
+---
+
+# 🎯 [Task Title]
+
+> **Goal:** [One-line summary]
+
+---
+
+## 📋 Overview
+
+| Key | Value |
+|-----|-------|
+| **Ticket** | [ABC-1234](https://jira.example.com/browse/ABC-1234) |
+| **Repos** | `repo1`, `repo2` |
+| **Priority** | 🔴 High / 🟡 Medium / 🟢 Low |
+
+---
+
+## ✅ Progress
+
+- [x] Completed item
+- [ ] In progress item
+- [ ] Pending item
+
+---
+
+## 📁 Files Changed
+
+| File | Change | Description |
+|------|--------|-------------|
+| `path/to/file.ts` | Modified | Added validation |
+
+---
+
+## 💡 Key Decisions
+
+**Decision 1:** Why we chose X over Y
+- Reason 1
+- Reason 2
+
+---
+
+## 📝 Notes
+
+[Additional context, gotchas, things to remember]
+
+---
+
+**Status:** 🟡 In Progress | **Updated:** YYYY-MM-DD HH:MM
+```
+
+---
+
+## When to SKIP Task Tracking
+
+**ONLY skip for these:**
+- ❓ Simple questions ("what does X do?")
+- 👀 Just reading/exploring code (no changes)
+- 🔧 Quick one-off terminal commands
+- 💬 Conversation/chat only (no files created or modified)
+
+**NEVER skip for:**
+- ✏️ Any file creation or modification
+- 📄 Documentation or guides (use `type: docs`)
+- 🔍 Investigations that produce findings (use `type: investigation`)
+- 💾 "Save this for later" requests
+
+---
+
+## Re-evaluate & Move Files
+
+**As work progresses, re-evaluate the file type:**
+
+| Started as... | But became... | Action |
+|---------------|---------------|--------|
+| Task | Reference guide | Move to `docs/[workspace]/` |
+| Investigation | Permanent how-to | Move to `docs/[workspace]/` |
+| Docs draft | Task with progress | Move to `task-history/[workspace]/` |
+| Workspace-specific | Cross-workspace | Move to `shared/` |
+
+**How to move:**
+```bash
+# Task became a guide (same workspace)
+mv task-history/backend/db-investigation.md docs/backend/database-guide.md
+
+# Became cross-workspace
+mv task-history/backend/general-task.md task-history/shared/general-task.md
+```
+
+**After moving, update the frontmatter:**
+```yaml
+---
+type: docs
+workspace: backend  # or "shared" if moved to shared
+moved_from: task-history/backend/db-investigation.md
+---
+```
+
+**Tell the user when you move:**
+> "I've moved this to `docs/backend/` since it's becoming a reference guide."
+
+---
+
+# Cursor Command Center
+
+This is a **Command Center** workspace with multiple repositories indexed for `@Codebase` search.
+
+## Context Awareness
+
+1. Consider code across ALL repositories in this workspace
+2. Look for patterns and conventions used across projects
+3. Check `task-history/` for recent related work
+4. When suggesting changes, check if similar patterns exist elsewhere
+
+## Cross-Repo Work
+
+1. Identify shared dependencies and patterns
+2. Ensure consistency in approach
+3. Note any breaking changes that might affect other repos
+
+## User Reminders
+
+- Use `@Codebase` for fast semantic search across all repos
+- Check `task-history/` for past work context
+- Run `./open.sh` to switch between project contexts
+
+---
+
+# 🔗 PR Tracking (Auto-Link)
+
+## When Creating PRs
+
+If user asks to create/open a PR:
+
+1. **Stage changes:** `git add -A`
+2. **Commit:** Use descriptive message with ticket reference
+3. **Push:** `git push -u origin <branch>`
+4. **Create PR:** 
+   ```bash
+   gh pr create --title "[TICKET] Description" --body "## Summary\n\n## Changes\n\n## Testing"
+   ```
+5. **Capture PR URL** from the `gh pr create` output
+6. **Add to task file** under "## 📦 Pull Requests" section
+
+## When User Mentions PRs
+
+If user shares a PR link or says "opened PR #X":
+1. Extract the PR URL
+2. Add to current task file under "## 📦 Pull Requests"
+
+## PR Section Template
+
+Add this section to the task file when PRs are created:
+
+```markdown
+---
+
+## 📦 Pull Requests
+
+| Repo | PR | Description | Status |
+|------|-----|-------------|--------|
+| api-gateway | [#142](https://github.com/org/api/pull/142) | Add retry logic | 🔄 Open |
+| auth-service | [#87](https://github.com/org/auth/pull/87) | Update validation | ✅ Merged |
+```
+
+## Multi-Service Tasks
+
+For tasks spanning multiple repos, track ALL PRs:
+- One row per repo/PR
+- Update status as PRs get reviewed/merged
+- Link PRs that depend on each other in Notes section
+
+## PR Status Icons
+
+| Icon | Meaning |
+|------|---------|
+| 🔄 | Open / In Review |
+| ✅ | Merged |
+| ❌ | Closed (not merged) |
+| 🔀 | Draft |
