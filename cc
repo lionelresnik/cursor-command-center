@@ -62,6 +62,10 @@ case "${1:-help}" in
         shift
         "$SCRIPT_DIR/standup.sh" "$@"
         ;;
+    sync)
+        shift
+        "$SCRIPT_DIR/sync.sh" "$@"
+        ;;
     *)
         echo "Unknown command: $1"
         echo "Run './cc help' for available commands"
