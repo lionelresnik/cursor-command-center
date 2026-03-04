@@ -1,0 +1,26 @@
+---
+description: "Naming conventions for workspaces, task files, and documentation in Command Center projects."
+alwaysApply: false
+globs: "**/*.code-workspace"
+---
+
+# Naming Conventions
+
+## Workspace Names
+- Lowercase, kebab-case: `backend`, `supply-chain`, `mobile-app`
+- Letters, numbers, hyphens, underscores only (no spaces)
+- Short and descriptive of the repo group's domain
+
+## Task File Names
+- With ticket: `[TICKET]-short-description.md` (e.g., `ABC-1234-fix-auth.md`)
+- Without ticket: `short-description.md` (e.g., `fix-login-bug.md`)
+- Lowercase, kebab-case, no spaces
+
+## Documentation Names
+- Descriptive of content: `database-guide.md`, `deployment-process.md`
+- Lowercase, kebab-case
+
+## Directory Structure
+- `task-history/[workspace]/` for work logs
+- `docs/[workspace]/` for reference guides
+- `shared/` subdirectory for cross-workspace content

@@ -643,7 +643,7 @@ save_config() {
     cat > "$CONFIG_FILE" << EOF
 {
   "created_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "projects": [$(printf '"%s",' "${projects[@]}" | sed 's/,$//')]
 }
 EOF
@@ -734,6 +734,11 @@ show_completion() {
 
 main() {
     mkdir -p "$CONTEXTS_DIR" "$WORKSPACES_DIR"
+    
+    # Sync plugin components first
+    if [ -x "$SCRIPT_DIR/sync.sh" ]; then
+        "$SCRIPT_DIR/sync.sh" --plugin --data
+    fi
     
     show_intro
     

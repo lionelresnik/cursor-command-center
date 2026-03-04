@@ -1,10 +1,10 @@
-# 📚 Task History
+# Task History
 
-> **Your development journal** - organized by workspace
+> **TL;DR:** Your development journal organized by workspace. Use `task-history/<workspace>/` for workspace-specific tasks, `task-history/shared/` for cross-workspace work. Export/import via `./cc export` and `./cc import`.
 
 ---
 
-## 📁 Structure
+## Structure
 
 ```
 task-history/
@@ -20,7 +20,7 @@ task-history/
 
 ---
 
-## 🎯 Which Folder?
+## Which Folder?
 
 | Scenario | Folder |
 |----------|--------|
@@ -30,7 +30,7 @@ task-history/
 
 ---
 
-## 📋 Naming Convention
+## Naming Convention
 
 ```
 [TICKET]-description.md
@@ -42,7 +42,7 @@ task-history/
 
 ---
 
-## 📄 File Format
+## File Format
 
 ```yaml
 ---
@@ -55,14 +55,14 @@ status: complete
 type: task
 ---
 
-# 🎯 Task Title
+# Task Title
 
 Content...
 ```
 
 ---
 
-## 🔍 Using Past Context
+## Using Past Context
 
 | Method | Example |
 |--------|---------|
@@ -72,7 +72,7 @@ Content...
 
 ---
 
-## 📦 Export/Import
+## Export/Import
 
 ```bash
 ./cc export    # Choose specific workspace or all

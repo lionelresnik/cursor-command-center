@@ -1,0 +1,55 @@
+---
+description: "Automatically capture PR URLs and link them to task files. Tracks PRs across multiple repos with status updates."
+alwaysApply: true
+---
+
+# PR Tracking
+
+## When Creating PRs
+
+If user asks to create/open a PR:
+
+1. Stage changes: `git add -A`
+2. Commit with descriptive message referencing the ticket
+3. Push: `git push -u origin <branch>`
+4. Create PR:
+   ```bash
+   gh pr create --title "[TICKET] Description" --body "## Summary\n\n## Changes\n\n## Testing"
+   ```
+5. Capture the PR URL from `gh pr create` output
+6. Add to the current task file under a "Pull Requests" section
+
+## When User Mentions PRs
+
+If the user shares a PR link or says "opened PR #X":
+1. Extract the PR URL
+2. Add to the current task file under "Pull Requests"
+
+## PR Section Template
+
+Add this section to the task file when PRs are created:
+
+```markdown
+## Pull Requests
+
+| Repo | PR | Description | Status |
+|------|-----|-------------|--------|
+| api-gateway | [#142](https://github.com/org/api/pull/142) | Add retry logic | Open |
+| auth-service | [#87](https://github.com/org/auth/pull/87) | Update validation | Merged |
+```
+
+## Multi-Service Tasks
+
+For tasks spanning multiple repos, track ALL PRs:
+- One row per repo/PR
+- Update status as PRs get reviewed/merged
+- Link PRs that depend on each other in Notes section
+
+## PR Status Values
+
+| Status | Meaning |
+|--------|---------|
+| Open | Open / In Review |
+| Merged | Merged |
+| Closed | Closed (not merged) |
+| Draft | Draft PR |

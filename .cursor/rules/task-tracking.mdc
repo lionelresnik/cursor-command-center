@@ -1,0 +1,143 @@
+---
+description: "Automatic task tracking with Jira integration. Tracks work in task files organized by workspace. Apply when the user is making code changes, creating files, or working on tasks."
+alwaysApply: true
+---
+
+# Task Tracking
+
+## Step 1: Ask for Ticket (Optional)
+
+Before work that creates or modifies files, ask:
+> "Is there a Jira ticket for this? (e.g., ABC-1234, or press Enter to skip)"
+
+If the user skips, create the task file without a ticket prefix (e.g., `fix-login-bug.md`).
+If a ticket is discovered later:
+1. Add the ticket to the task file frontmatter
+2. Rename the file to include the ticket prefix (e.g., `fix-login-bug.md` → `ABC-1234-fix-login-bug.md`)
+3. Tell the user: "Updated task file with ticket ABC-1234"
+
+## Step 2: Identify the Workspace
+
+Detect the workspace using these methods (in order):
+1. Check `.cursor/cc-context.json` for the `"workspace"` field
+2. Check the open `.code-workspace` filename (e.g., `platform.code-workspace` → `platform`)
+3. Ask the user
+
+Only use `shared` if the user explicitly says the task spans multiple workspaces. **Never default to "shared".**
+
+## Step 3: Create Task File
+
+**Location:** `task-history/[WORKSPACE]/[TICKET]-description.md`
+
+Examples:
+- `task-history/frontend/ABC-1234-add-user-auth.md`
+- `task-history/backend/fix-login-bug.md`
+- `task-history/shared/cross-repo-refactor.md`
+
+**For reference docs:** `docs/[WORKSPACE]/[name].md`
+- `docs/backend/database-connection-guide.md`
+- `docs/shared/deployment-guide.md`
+
+Rules:
+- Tasks go in `task-history/[workspace]/`
+- Reference docs go in `docs/[workspace]/`
+- Use `shared/` for cross-workspace content
+- Create the workspace folder if it doesn't exist
+
+## Task File Template
+
+### Template
+
+```yaml
+---
+date: YYYY-MM-DD HH:MM
+workspace: [workspace]
+ticket: [TICKET-ID] (optional)
+repos: [repo1, repo2]
+tags: [tag1, tag2]
+status: in-progress
+type: task
+---
+```
+
+````markdown
+# [TICKET-ID] — Short descriptive title
+
+**Status:** In Progress | **Priority:** High | **Updated:** YYYY-MM-DD
+
+> **TL;DR:** 2-3 sentence summary of the task, what's being done, and expected outcome.
+
+---
+
+## Overview
+
+| Key | Value |
+|-----|-------|
+| **Ticket** | [TICKET-ID](link) |
+| **Workspace** | [workspace] |
+| **Repos** | repo1, repo2 |
+| **Priority** | High / Medium / Low |
+
+---
+
+## Analysis
+
+Detailed analysis, root cause, or implementation plan.
+
+> **Note:** Use callout blocks for important context.
+
+```mermaid
+graph TD
+    A[Component] --> B[Component]
+```
+
+---
+
+## Progress
+
+- [x] Step 1 completed
+- [ ] Step 2 in progress
+- [ ] Step 3 pending
+
+---
+
+## Key Decisions
+
+> **Decision:** Chose approach X over Y because of Z.
+
+> **Decision:** Using library A instead of B for performance reasons.
+
+---
+
+<details>
+<summary>Files Changed</summary>
+
+| File | Change | Description |
+|------|--------|-------------|
+| src/auth.ts | Modified | Updated token refresh |
+
+</details>
+
+---
+
+## Pull Requests
+
+| Repo | PR | Description | Status |
+|------|-----|-------------|--------|
+| api-gateway | [#142](link) | Add retry logic | Open |
+
+---
+
+## Notes
+
+Additional context, follow-ups, or references.
+````
+
+## When to SKIP
+
+Skip for: questions, reading code, one-off commands, chat-only (no file changes).
+Never skip for: file creation/modification, docs, investigations, "save this for later".
+
+## Re-evaluate
+
+If a task becomes a reference guide → move to `docs/[workspace]/`. If docs become a task → move to `task-history/[workspace]/`. Update frontmatter with `moved_from:` and tell the user.

@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "./scripts/session-start.sh"
+      }
+    ],
+    "afterShellExecution": [
+      {
+        "command": "./scripts/after-shell-execution.sh",
+        "matcher": "gh pr create|git push"
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "./scripts/session-end.sh"
+      }
+    ]
+  }
+}
