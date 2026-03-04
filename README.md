@@ -30,7 +30,7 @@ https://github.com/user-attachments/assets/5455e674-f622-4ffa-bec8-d25aa0d38b19
 | 🔗 **PR Auto-Linking** | PRs automatically linked to task files |
 | 🗺️ **Dependency Graph** | Visualize service architecture (no tokens!) |
 | 🚀 **Quick Re-open** | Jump back to your last workspace instantly |
-| ✅ **Todo List** | Persistent todos with priorities, workspace tagging, source tracking |
+| ✅ **Todo List** | Persistent todos with priorities, workspace tagging, ticket linking, source tracking |
 | 📋 **Standups** | Daily and weekly standup summaries with work week awareness |
 | 🎭 **Personalization** | Remembers your name, work schedule, greets you based on time of day |
 | 📦 **Export/Import** | Backup and transfer your full setup (including todos + standups) |

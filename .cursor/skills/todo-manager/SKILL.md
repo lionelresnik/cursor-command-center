@@ -13,18 +13,24 @@ All todos are stored in `~/.command-center/todos.md` as a markdown file with thi
 # Todos
 
 ## In Progress
-- [ ] **[workspace]** Task description `#priority-high` `#user`
+- [ ] **[workspace]** Task description `#priority-high` `#TICKET-123` `#user`
 - [ ] **[workspace]** Another task `#priority-medium` `#lucius`
 
 ## Pending
-- [ ] **[backend]** Implement retry logic for API calls `#priority-high` `#user`
+- [ ] **[backend]** Implement retry logic for API calls `#priority-high` `#ABC-456` `#user`
 - [ ] **[frontend]** Fix responsive layout on mobile `#priority-medium` `#lucius`
 - [ ] **[shared]** Update deployment docs `#priority-low` `#user`
 
 ## Done
-- [x] **[backend]** Add health check endpoint _(completed 2025-02-18)_ `#user`
+- [x] **[backend]** Add health check endpoint _(completed 2025-02-18)_ `#ABC-456` `#user`
 - [x] **[platform]** Fix auth token refresh _(completed 2025-02-17)_ `#lucius`
 ```
+
+### Ticket/Task Tagging
+
+Todos can be optionally tagged with a ticket ID (e.g., `#SLK-110873`, `#ABC-1234`) to link them to specific tasks or Jira tickets. This allows filtering todos by ticket.
+
+Format: `#TICKET-ID` (uppercase, placed before source tag)
 
 ## Todo Sources
 
@@ -54,10 +60,16 @@ When the user says "add todo", "remind me to", "I need to", "don't forget":
    - Check the open `.code-workspace` filename (e.g., `platform.code-workspace` → workspace is `platform`)
    - Ask the user
    - **Never default to "shared"** unless the user explicitly says the todo spans multiple workspaces
-2. Ask priority if not obvious (high/medium/low, default: medium)
-3. Tag as `#user`
-4. Add to the Pending section of `~/.command-center/todos.md`
-5. Confirm: "Added to your list: [task] ([workspace], priority: [level])"
+2. Detect ticket ID from context:
+   - Check if user is working on a task file (e.g., `task-history/cspm/SLK-110873-gcp-org-onboarding.md`)
+   - Check task file frontmatter for `ticket:` field
+   - Check if user mentions a ticket in the todo request
+   - If found, add `#TICKET-ID` tag
+   - If no ticket, skip this tag
+3. Ask priority if not obvious (high/medium/low, default: medium)
+4. Tag as `#user`
+5. Add to the Pending section of `~/.command-center/todos.md`
+6. Confirm: "Added to your list: [task] ([workspace], priority: [level], ticket: [TICKET-ID])"
 
 ### Lucius-initiated todo
 When Lucius detects something that needs attention:
@@ -84,6 +96,8 @@ When the user says "working on", "starting", "picking up":
 - **"Have I forgotten something?"** → Show all pending items, highlight any older than 7 days
 - **"Show all todos"** → Full list grouped by status
 - **"Show todos for [workspace]"** → Filter by workspace
+- **"What's left for [TICKET-ID]?"** / **"Show todos for [TICKET-ID]"** → Filter by ticket ID
+- **"What tickets do I have todos for?"** → List all unique ticket IDs with todo counts
 
 ### Display format (chat)
 
@@ -93,14 +107,29 @@ When displaying todos in chat (e.g., "what's next?", "what's left?", "show all t
 ## Your Todos
 
 ### 🔄 In Progress
-- **[workspace]** Task description `⚡ high` `#user`
+- **[workspace]** Task description `⚡ high` `#TICKET-123` `#user`
 
 ### 📌 Pending
-- **[workspace]** Task description `⚡ high` `#user`
+- **[workspace]** Task description `⚡ high` `#ABC-456` `#user`
 - **[workspace]** Task description `#lucius`
 
 ### ✅ Recently Done
-- ~~Task description~~ _(completed Feb 26)_ `#user`
+- ~~Task description~~ _(completed Feb 26)_ `#TICKET-123` `#user`
+```
+
+When filtering by ticket (e.g., "what's left for SLK-110873?"), show:
+```markdown
+## Todos for SLK-110873
+
+### 🔄 In Progress (2)
+- **[cspm]** Fix GCP onboarding script `⚡ high` `#user`
+- **[cspm]** Update terraform docs `#lucius`
+
+### 📌 Pending (1)
+- **[cspm]** Test with customer environment `⚡ medium` `#user`
+
+### ✅ Done (3)
+- ~~Investigate permissions issue~~ _(completed Feb 22)_ `#user`
 ```
 
 ### Prioritize
@@ -116,7 +145,14 @@ Todos span all workspaces. Each todo is tagged with its workspace name in bold b
 
 ## Integration with Task Tracking
 
-When a task file is created in `task-history/`, suggest adding a corresponding todo if one doesn't exist. When a todo is completed, check if there's a related task file to update.
+When a task file is created in `task-history/`, suggest adding a corresponding todo if one doesn't exist. Automatically tag the todo with the ticket ID from the task file's frontmatter.
+
+When a todo is completed, check if there's a related task file to update. If the task file's status is `in-progress` and all todos for that ticket are done, suggest updating the task file status to `complete`.
+
+When filtering todos by ticket (e.g., "what's left for SLK-110873?"), also show a link to the task file if it exists:
+```
+📄 Task file: task-history/cspm/SLK-110873-gcp-org-onboarding-issues.md
+```
 
 ## Proactive Behavior
 
