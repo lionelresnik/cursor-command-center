@@ -1,0 +1,134 @@
+---
+description: "Markdown style guide for all generated content. Ensures task files, docs, standups, and todos have Confluence-like readability with visual hierarchy, callout blocks, and structured sections."
+alwaysApply: true
+---
+
+## Markdown Style Guide
+
+All generated markdown (tasks, docs, standups, architecture notes) must follow these standards for readability.
+
+### Visual Hierarchy
+
+- **H1** — Document title only (one per file)
+- **H2** — Major sections, separated by `---`
+- **H3** — Subsections within a major section
+- **Bold** for key terms, inline labels, and emphasis
+- **Inline code** for file paths, commands, variable names
+- Use `---` horizontal rules between major sections for clear visual breaks
+
+### Document Structure
+
+Every generated document should follow this order:
+
+1. **Title** (H1) with ticket ID if applicable
+2. **Status line** — `**Status:** In Progress | **Priority:** High | **Updated:** YYYY-MM-DD`
+3. **TL;DR** — 2-3 sentence executive summary in a blockquote:
+   ```
+   > **TL;DR:** Brief summary of what this is about, what was done, and the outcome.
+   ```
+4. **Overview table** — Key metadata as a table (ticket, repos, tags, etc.)
+5. **Detail sections** (H2) — Analysis, root cause, implementation, etc.
+6. **Progress** — Checklist with `- [x]` / `- [ ]`
+7. **Key Decisions** — As callout blocks (see below)
+8. **Files Changed** — In a collapsible `<details>` block if long
+9. **Pull Requests** — Table with repo, PR link, description, status
+10. **Notes** — Additional context
+
+### Callout Blocks
+
+Use blockquotes with bold labels for different callout types:
+
+- **Info:** `> **Note:** Contextual information or clarification`
+- **Warning:** `> **Warning:** Something that could cause issues`
+- **Tip:** `> **Tip:** Helpful suggestion or best practice`
+- **Important:** `> **Important:** Critical information that must not be missed`
+- **Decision:** `> **Decision:** Key decision made and rationale`
+
+### Tables
+
+Use tables for structured data:
+- Metadata (ticket, repos, priority, status)
+- File changes (file path, change type, description)
+- PR tracking (repo, PR link, description, status)
+- Comparison data
+
+### Diagrams
+
+Use Mermaid diagrams instead of ASCII art for:
+- Architecture flows
+- Decision trees
+- Sequence diagrams
+- State machines
+
+```mermaid
+graph TD
+    A[Service A] --> B[Service B]
+    B --> C[(Database)]
+```
+
+### Collapsible Sections
+
+Use `<details>` for long content that would clutter the document:
+
+```html
+<details>
+<summary>Files Changed (12 files)</summary>
+
+| File | Change |
+|------|--------|
+| src/auth.ts | Modified |
+
+</details>
+```
+
+### Code Blocks
+
+- Always specify the language: ```typescript, ```bash, ```json, etc.
+- Keep code blocks short and focused
+- Add a brief description before the code block
+
+### Lists
+
+- **Bullet lists** for unordered items, features, or notes
+- **Numbered lists** for sequential steps or ranked items
+- **Checklists** (`- [x]` / `- [ ]`) for progress tracking
+- Nest lists one level max for readability
+
+### Standup Format
+
+Daily and weekly standups should use clean sections with callouts:
+
+```markdown
+# Standup — Monday, February 26, 2026
+
+> **TL;DR:** Completed auth refactor, working on retry logic, next up is API gateway tests.
+
+## Done
+- Completed auth token refresh in **backend** (PR: [#142](link))
+- Marked done: update deployment docs
+
+## In Progress
+- Working on retry logic in **backend**
+  > **Note:** Carrying over from yesterday — blocked on API rate limits
+
+## Up Next
+- API gateway integration tests (`#priority-high`)
+- Review PR for notification service
+```
+
+### Todo Display
+
+When showing todos inline, use status indicators:
+
+- `✅` for completed items
+- `🔄` for in-progress items  
+- `📌` for pending items
+- `⚡` for high priority
+
+### Avoid
+
+- ASCII art diagrams (use Mermaid instead)
+- Walls of text without structure
+- Deeply nested lists (max 2 levels)
+- Empty sections (remove them instead)
+- Redundant headers that add no value

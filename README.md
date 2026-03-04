@@ -21,6 +21,7 @@ https://github.com/user-attachments/assets/5455e674-f622-4ffa-bec8-d25aa0d38b19
 
 | Feature | Description |
 |---------|-------------|
+| 🤖 **@lu AI Assistant** | Full-featured AI assistant with todos, standups, personalization, task tracking |
 | 🔍 **Super-fast @Codebase** | All your repos indexed together for instant AI search |
 | 📁 **Project Groups** | Organize repos into contexts (Backend, Frontend, etc.) |
 | 🔄 **Deep Scanning** | Finds nested repos (5 levels deep) |
@@ -29,8 +30,9 @@ https://github.com/user-attachments/assets/5455e674-f622-4ffa-bec8-d25aa0d38b19
 | 🔗 **PR Auto-Linking** | PRs automatically linked to task files |
 | 🗺️ **Dependency Graph** | Visualize service architecture (no tokens!) |
 | 🚀 **Quick Re-open** | Jump back to your last workspace instantly |
-| ✅ **Todo List** | Persistent todos with priorities, workspace tagging |
-| 📋 **Standups** | Daily and weekly standup summaries from todos + task history |
+| ✅ **Todo List** | Persistent todos with priorities, workspace tagging, source tracking |
+| 📋 **Standups** | Daily and weekly standup summaries with work week awareness |
+| 🎭 **Personalization** | Remembers your name, work schedule, greets you based on time of day |
 | 📦 **Export/Import** | Backup and transfer your full setup (including todos + standups) |
 
 ---
@@ -60,10 +62,16 @@ https://github.com/user-attachments/assets/5455e674-f622-4ffa-bec8-d25aa0d38b19
 ### 1️⃣ Clone & Setup
 
 ```bash
+# Clone both repos (CLI + Plugin)
 git clone https://github.com/lionelresnik/cursor-command-center.git
+git clone https://github.com/lionelresnik/cursor-command-center-plugin.git
+
+# Run setup
 cd cursor-command-center
 ./setup.sh
 ```
+
+> **Note:** The plugin repo enables **@lu** / **@lucius** AI assistant with full capabilities (todos, standups, personalization, task tracking, PR linking, easter eggs). If you skip cloning the plugin, the CLI will still work but @lu won't be available.
 
 ### 2️⃣ The Setup Wizard
 
@@ -136,6 +144,33 @@ Select a project to open:
 │                                                                         │
 │  Example: "@Codebase where is the auth logic?"                          │
 └─────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+---
+
+## 🔄 Upgrading & Syncing
+
+Already have Command Center installed? Get the latest features without recreating workspaces:
+
+```bash
+cd cursor-command-center
+git pull
+./sync.sh
+```
+
+**What `sync.sh` does:**
+- ✅ Installs/updates plugin components (@lu, rules, skills, hooks)
+- ✅ Initializes new data files (profile.json, session-state.json, standups/)
+- ✅ Fixes workspace files (e.g., tilde path issues)
+- ✅ Works for existing setups — no need to recreate workspaces
+
+**Partial sync options:**
+```bash
+./sync.sh --plugin      # Only sync plugin components
+./sync.sh --data        # Only initialize data files
+./sync.sh --workspaces  # Only fix workspace files
 ```
 
 ---
