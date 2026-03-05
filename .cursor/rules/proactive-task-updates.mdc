@@ -1,0 +1,121 @@
+---
+description: "Proactively detect work completion and update task files automatically. Monitors significant code changes, file edits, and commits to keep task history current."
+alwaysApply: true
+---
+
+# Proactive Task Updates
+
+## When to Update Task Files
+
+Monitor for these signals that work has been completed:
+
+### 1. After Significant Code Changes
+When the user has made substantial edits (not just minor tweaks):
+- Multiple files modified
+- New functions/classes added
+- Bug fixes implemented
+- Features completed
+
+**Action:** Offer to update the relevant task file:
+> "I noticed you just [what they did]. Should I update the task file to reflect this progress?"
+
+### 2. After Git Commits
+When you see a git commit command executed:
+- Parse the commit message
+- Identify which task/ticket it relates to
+- Offer to update the task file with the commit details
+
+**Action:**
+> "I see you committed '[commit message]'. Want me to add this to the task file?"
+
+### 3. After PR Creation
+When `gh pr create` is executed:
+- Capture the PR URL and title
+- Update the task file automatically (this is already handled by pr-linking.mdc)
+
+### 4. When User Says They're Done
+When the user says things like:
+- "I'm done with [task]"
+- "Finished [subtask]"
+- "Completed [feature]"
+- "Fixed [bug]"
+
+**Action:** Immediately update the task file and mark items as complete.
+
+## How to Update Task Files
+
+### Step 1: Identify the Task File
+1. Check if there's an open task file in the current workspace
+2. Look for task files with `status: in-progress` in `task-history/[workspace]/`
+3. If multiple in-progress tasks, ask which one to update
+4. If no task file exists, ask if they want to create one
+
+### Step 2: Determine What Changed
+Summarize the work completed:
+- What was done (feature added, bug fixed, refactor completed)
+- Which files were changed
+- Any key decisions made
+- Any blockers encountered
+
+### Step 3: Update the Task File
+Add to the appropriate section:
+- **Progress checklist:** Mark items as done (✅)
+- **Key Decisions:** Add new decision callouts if needed
+- **Files Changed:** Update the collapsible files section
+- **Status:** Update frontmatter status if task is complete
+- **Updated date:** Update the `**Updated:**` date in the header
+
+### Step 4: Confirm
+Tell the user:
+> "Updated task file: [filename] — marked [what was done] as complete"
+
+## Detection Heuristics
+
+### High Confidence (Auto-update)
+- Git commit with clear task reference in message
+- PR created (already handled)
+- User explicitly says "done" or "finished"
+
+### Medium Confidence (Ask first)
+- 5+ files modified in a session
+- New functions/classes added
+- Significant refactoring detected
+
+### Low Confidence (Don't interrupt)
+- Minor edits (typos, formatting)
+- Single file tweaks
+- Exploratory changes
+
+## Integration with Standup
+
+When updating task files, also consider:
+- If it's the first update of the day, this will appear in tomorrow's standup
+- Group related updates together (don't create multiple entries for the same task)
+- Use clear, concise descriptions for standup readability
+
+## Special Cases
+
+### No Task File Exists
+If significant work is detected but no task file exists:
+> "I noticed you've been working on [what]. Want me to create a task file to track this?"
+
+### Multiple Tasks in Progress
+If multiple task files are `in-progress`, ask which one the work relates to:
+> "Which task is this for? (1) [task A], (2) [task B], or (3) new task?"
+
+### Work Spans Multiple Tasks
+If work relates to multiple tasks, update all relevant task files.
+
+## Proactive Timing
+
+**Check for updates:**
+- After every 10-15 minutes of active coding
+- After git commits
+- When user pauses (no activity for 2+ minutes)
+- At end of conversation (before goodbye)
+
+**Don't interrupt:**
+- During active typing
+- In the middle of debugging
+- When user is asking questions
+- During error investigation
