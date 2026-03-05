@@ -80,52 +80,119 @@ sync_plugin_components() {
     # Create .cursor structure
     mkdir -p "$CURSOR_DIR/rules" "$CURSOR_DIR/skills" "$CURSOR_DIR/agents" "$CURSOR_DIR/hooks" "$CURSOR_DIR/scripts" "$ASSETS_DIR"
     
+    local added_count=0
+    local updated_count=0
+    local unchanged_count=0
+    
+    # Helper function to sync files and track changes
+    sync_files() {
+        local src_dir="$1"
+        local dest_dir="$2"
+        local pattern="$3"
+        local category="$4"
+        
+        local changes=()
+        
+        for src_file in "$src_dir"/$pattern; do
+            [ -e "$src_file" ] || continue
+            local filename=$(basename "$src_file")
+            local dest_file="$dest_dir/$filename"
+            
+            if [ ! -f "$dest_file" ]; then
+                cp -r "$src_file" "$dest_file"
+                changes+=("${GREEN}+${NC} $filename ${DIM}(new)${NC}")
+                ((added_count++))
+            elif ! cmp -s "$src_file" "$dest_file"; then
+                cp -r "$src_file" "$dest_file"
+                changes+=("${YELLOW}↻${NC} $filename ${DIM}(modified)${NC}")
+                ((updated_count++))
+            else
+                ((unchanged_count++))
+            fi
+        done
+        
+        # Print changes for this category
+        if [ ${#changes[@]} -gt 0 ]; then
+            for change in "${changes[@]}"; do
+                echo -e "  $change"
+            done
+        fi
+    }
+    
     # Sync rules
     if [ -d "$PLUGIN_DIR/rules" ]; then
-        rm -rf "$CURSOR_DIR/rules"/*.mdc 2>/dev/null || true
-        cp "$PLUGIN_DIR/rules"/*.mdc "$CURSOR_DIR/rules/" 2>/dev/null && \
-            print_success "Synced rules (task-tracking, PR linking, personalization, daily recap, easter egg)"
+        sync_files "$PLUGIN_DIR/rules" "$CURSOR_DIR/rules" "*.mdc" "rules"
     fi
     
-    # Sync skills
+    # Sync skills (directory-based)
     if [ -d "$PLUGIN_DIR/skills" ]; then
-        rm -rf "$CURSOR_DIR/skills"/* 2>/dev/null || true
-        cp -r "$PLUGIN_DIR/skills"/* "$CURSOR_DIR/skills/" 2>/dev/null && \
-            print_success "Synced skills (workspace-manager, todo-manager, standup-generator, graph-generator, repo-status, export-import)"
+        for skill_dir in "$PLUGIN_DIR/skills"/*; do
+            [ -d "$skill_dir" ] || continue
+            local skill_name=$(basename "$skill_dir")
+            local dest_skill_dir="$CURSOR_DIR/skills/$skill_name"
+            mkdir -p "$dest_skill_dir"
+            
+            for skill_file in "$skill_dir"/*; do
+                [ -f "$skill_file" ] || continue
+                local filename=$(basename "$skill_file")
+                local dest_file="$dest_skill_dir/$filename"
+                
+                if [ ! -f "$dest_file" ]; then
+                    cp "$skill_file" "$dest_file"
+                    echo -e "  ${GREEN}+${NC} skills/$skill_name/$filename ${DIM}(new)${NC}"
+                    ((added_count++))
+                elif ! cmp -s "$skill_file" "$dest_file"; then
+                    cp "$skill_file" "$dest_file"
+                    echo -e "  ${YELLOW}↻${NC} skills/$skill_name/$filename ${DIM}(modified)${NC}"
+                    ((updated_count++))
+                else
+                    ((unchanged_count++))
+                fi
+            done
+        done
     fi
     
     # Sync agents
     if [ -d "$PLUGIN_DIR/agents" ]; then
-        rm -rf "$CURSOR_DIR/agents"/*.md 2>/dev/null || true
-        cp "$PLUGIN_DIR/agents"/*.md "$CURSOR_DIR/agents/" 2>/dev/null && \
-            print_success "Synced agents (@lu and @lucius)"
+        sync_files "$PLUGIN_DIR/agents" "$CURSOR_DIR/agents" "*.md" "agents"
     fi
     
     # Sync hooks
     if [ -d "$PLUGIN_DIR/hooks" ]; then
-        rm -rf "$CURSOR_DIR/hooks"/* 2>/dev/null || true
-        cp "$PLUGIN_DIR/hooks"/* "$CURSOR_DIR/hooks/" 2>/dev/null && \
-            print_success "Synced hooks (session lifecycle)"
+        sync_files "$PLUGIN_DIR/hooks" "$CURSOR_DIR/hooks" "*" "hooks"
     fi
     
     # Sync scripts
     if [ -d "$PLUGIN_DIR/scripts" ]; then
-        rm -rf "$CURSOR_DIR/scripts"/*.sh 2>/dev/null || true
-        cp "$PLUGIN_DIR/scripts"/*.sh "$CURSOR_DIR/scripts/" 2>/dev/null
-        chmod +x "$CURSOR_DIR/scripts"/*.sh 2>/dev/null || true
-        print_success "Synced hook scripts"
+        for script in "$PLUGIN_DIR/scripts"/*.sh; do
+            [ -f "$script" ] || continue
+            local filename=$(basename "$script")
+            local dest_file="$CURSOR_DIR/scripts/$filename"
+            
+            if [ ! -f "$dest_file" ]; then
+                cp "$script" "$dest_file"
+                chmod +x "$dest_file"
+                echo -e "  ${GREEN}+${NC} scripts/$filename ${DIM}(new)${NC}"
+                ((added_count++))
+            elif ! cmp -s "$script" "$dest_file"; then
+                cp "$script" "$dest_file"
+                chmod +x "$dest_file"
+                echo -e "  ${YELLOW}↻${NC} scripts/$filename ${DIM}(modified)${NC}"
+                ((updated_count++))
+            else
+                ((unchanged_count++))
+            fi
+        done
     fi
     
     # Sync assets
     if [ -d "$PLUGIN_DIR/assets" ]; then
-        cp "$PLUGIN_DIR/assets"/* "$ASSETS_DIR/" 2>/dev/null && \
-            print_success "Synced assets (easter egg art)"
+        sync_files "$PLUGIN_DIR/assets" "$ASSETS_DIR" "*" "assets"
     fi
     
     # Verify graph.sh is available for @lu (--mermaid-file support)
     if [ -f "$SCRIPT_DIR/graph.sh" ]; then
         chmod +x "$SCRIPT_DIR/graph.sh"
-        print_success "graph.sh available for @lu (--mermaid-file support)"
     fi
     
     # Fix easter-egg.mdc path reference
@@ -138,7 +205,13 @@ sync_plugin_components() {
     fi
     
     echo ""
-    print_success "Plugin components synced successfully!"
+    # Print summary
+    if [ $added_count -gt 0 ] || [ $updated_count -gt 0 ]; then
+        print_success "Sync complete: $added_count added, $updated_count updated, $unchanged_count unchanged"
+    else
+        print_success "All files up to date ($unchanged_count files)"
+    fi
+    
     return 0
 }
 

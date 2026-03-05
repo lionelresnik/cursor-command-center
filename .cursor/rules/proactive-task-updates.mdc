@@ -42,6 +42,24 @@ When the user says things like:
 
 **Action:** Immediately update the task file and mark items as complete.
 
+### 5. After Completing Todos
+When a todo is marked as done (moved to Done section):
+- Check if the todo has a ticket tag (e.g., `#PROJ-123`)
+- If yes, update the corresponding task file with the completed work
+- Add to the progress checklist or key decisions section
+
+**Action:**
+> "Marked todo as done. Updated task file [filename] to reflect this progress."
+
+### 6. After Plan Mode Sessions
+When exiting Plan mode or completing a planning session:
+- Detect if a plan was created or decisions were made
+- Check if there's a related task file
+- Offer to add the plan/decisions to the task file
+
+**Action:**
+> "I see we just finished planning [what]. Should I add these decisions to the task file?"
+
 ## How to Update Task Files
 
 ### Step 1: Identify the Task File
@@ -86,12 +104,22 @@ Tell the user:
 - Single file tweaks
 - Exploratory changes
 
-## Integration with Standup
+## Integration with Standup and Todos
 
 When updating task files, also consider:
 - If it's the first update of the day, this will appear in tomorrow's standup
 - Group related updates together (don't create multiple entries for the same task)
 - Use clear, concise descriptions for standup readability
+
+**Todo Integration:**
+- When a todo with a ticket tag is completed, automatically update the task file
+- Check if all todos for a ticket are done → suggest marking task as complete
+- Link between todo completion and task file progress
+
+**Plan Mode Integration:**
+- After plan mode, capture key decisions and add to task file
+- Update the "Key Decisions" section with planning outcomes
+- Add any new subtasks to the progress checklist
 
 ## Special Cases
 
