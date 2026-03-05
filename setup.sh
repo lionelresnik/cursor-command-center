@@ -735,9 +735,9 @@ show_completion() {
 main() {
     mkdir -p "$CONTEXTS_DIR" "$WORKSPACES_DIR"
     
-    # Sync plugin components first
+    # Initialize data files
     if [ -x "$SCRIPT_DIR/sync.sh" ]; then
-        "$SCRIPT_DIR/sync.sh" --plugin --data
+        "$SCRIPT_DIR/sync.sh" --data
     fi
     
     show_intro

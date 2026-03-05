@@ -7,9 +7,9 @@ alwaysApply: true
 
 When the user mentions any of these keywords: **batman**, **dark knight**, **bruce wayne**, **gotham**, **wayne enterprises**, **wayne**, **bat signal**, **batcave**, **alfred**, **the bat**, **vengeance**, **gotham safe**:
 
-**CRITICAL: You MUST use the Read tool to read `~/.command-center/assets/easter-egg-art.md` BEFORE responding. NEVER generate ASCII art yourself. ALWAYS read from the file.**
+**CRITICAL: You MUST use the Read tool to read the easter-egg-art.md file BEFORE responding. NEVER generate ASCII art yourself. ALWAYS read from the file.**
 
-1. **FIRST:** Use the Read tool to read the ENTIRE file `~/.command-center/assets/easter-egg-art.md`
+1. **FIRST:** Use the Read tool to read the ENTIRE file `assets/easter-egg-art.md` (or `~/.command-center/assets/easter-egg-art.md` if synced to CLI)
 2. Pick the matching Option from the file (vary them, don't repeat the same one)
 3. Copy the EXACT art+quote from that Option into a fenced code block with `txt` language tag
 4. **DO NOT generate, modify, or create ASCII art** — copy EXACTLY character-for-character from the file
