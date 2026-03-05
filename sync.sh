@@ -67,12 +67,12 @@ sync_plugin_components() {
     print_step "Syncing Plugin Components"
     
     if [ ! -d "$PLUGIN_DIR" ]; then
-        print_warning "Plugin repo not found at $PLUGIN_DIR"
-        print_info "Skipping plugin sync"
-        print_info "Clone the plugin repo next to this one to enable @lu features:"
-        print_info "  cd $(dirname "$SCRIPT_DIR")"
-        print_info "  git clone https://github.com/lionelresnik/cursor-command-center-plugin.git"
-        return 1
+        print_info "Plugin repo not found at $PLUGIN_DIR"
+        print_info "Using built-in plugin files (all features included)"
+        print_info ""
+        print_info "Note: Plugin sync is optional and only needed for developers"
+        print_info "who want to test unreleased plugin features."
+        return 0
     fi
     
     print_info "Found plugin at: $PLUGIN_DIR"
