@@ -62,16 +62,15 @@ https://github.com/user-attachments/assets/5455e674-f622-4ffa-bec8-d25aa0d38b19
 ### 1️⃣ Clone & Setup
 
 ```bash
-# Clone both repos (CLI + Plugin)
+# Clone the repo
 git clone https://github.com/lionelresnik/cursor-command-center.git
-git clone https://github.com/lionelresnik/cursor-command-center-plugin.git
 
 # Run setup
 cd cursor-command-center
 ./setup.sh
 ```
 
-> **Note:** The plugin repo enables **@lu** / **@lucius** AI assistant with full capabilities (todos, standups, personalization, task tracking, PR linking, easter eggs). If you skip cloning the plugin, the CLI will still work but @lu won't be available.
+> **Note:** All @lu / @lucius AI assistant features are built-in (todos, standups, personalization, task tracking, PR linking, easter eggs).
 
 ### 2️⃣ The Setup Wizard
 
