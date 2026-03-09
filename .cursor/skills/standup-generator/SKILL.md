@@ -25,9 +25,9 @@ If not set, default to `"mon-fri"`. The **first day** of the work week determine
 
 When the user asks for a **weekly** standup or recap, append the current day name to `preferences.weeklyRequestDays` in `profile.json`. The personalization rule monitors this array and auto-detects the work week pattern after 2+ requests on the same day (see `personalization.mdc` for details).
 
-This means even if the user never explicitly says "I work Sun–Thu", if they keep asking for weekly recaps on Sundays or Thursdays, the system will figure it out and adjust.
-
 ## Data Sources
+
+**IMPORTANT: Standups are ALWAYS cross-workspace.** Read ALL workspaces, not just the current one.
 
 Gather information from these locations (in order):
 
@@ -36,7 +36,8 @@ Gather information from these locations (in order):
    - "In Progress" section → **Doing**
    - "Pending" section, highest priority → **Up Next**
 
-2. **Task history** — `~/.command-center/task-history/[workspace]/`
+2. **Task history** — `~/.command-center/task-history/` (ALL workspace folders)
+   - Scan ALL subdirectories: `cspm/`, `supply-chain/`, `backend/`, `platform/`, `shared/`, etc.
    - Recent task files (last 24h for daily, last 5 work days for weekly)
    - Extract task names, PR links, completion status
 
@@ -46,26 +47,48 @@ Gather information from these locations (in order):
 4. **Previous standup** — `~/.command-center/standups/` (most recent file)
    - Compare to detect carryover items
 
+## How to Describe Work Items
+
+**NEVER just list ticket IDs.** For each item, always include:
+- **What the issue/request was** (1 short sentence — what was the problem or ask?)
+- **What was done** (1 short sentence — what action was taken or completed?)
+
+### Example (Good ✅)
+```
+- ✅ **[cspm]** GCP onboarding script failing with `sh` vs `bash` syntax error
+  → Fixed: Updated UI to use `bash` instead of `sh`, added retry/backoff logic
+- 🔄 **[supply-chain]** Repos stuck scanning due to expired JWT tokens
+  → In progress: Added proactive JWT refresh + retry-on-401 in scanner client
+```
+
+### Example (Bad ❌)
+```
+- ✅ Worked on PROJ-123
+- 🔄 PROJ-456 in progress
+```
+
+If you don't have enough context about what the issue was, read the task file to get the TL;DR summary from the frontmatter or first paragraph.
+
 ## Daily Standup Format
 
 ```markdown
 # Standup — [Day, Month DD, YYYY]
 
-> **TL;DR:** [1-sentence summary: what was done, what's in progress, what's next]
+> **TL;DR:** [1-sentence summary across ALL workspaces: what was done, what's in progress, what's next]
 
 ---
 
-## Done
-- ✅ Completed [task] in **[workspace]** (PR: [#N](link))
-- ✅ Marked done: [todo item]
+## ✅ Done
+- **[workspace]** [What the issue/request was]
+  → [What was done/completed] ([PR #N](link) if available)
 
-## In Progress
-- 🔄 Working on [task] in **[workspace]**
+## 🔄 In Progress
+- **[workspace]** [What the issue/request was]
+  → [Current status / what's being worked on]
   > **Note:** [carryover note if item was also in progress yesterday]
 
-## Up Next
-- 📌 [highest priority pending todo] (`⚡ high`)
-- 📌 [next item]
+## 📌 Up Next
+- **[workspace]** [Task description] (`⚡ high`)
 
 ---
 
@@ -78,24 +101,24 @@ Gather information from these locations (in order):
 # Weekly Recap — Week [W], [YYYY]
 **[Start date] → [End date]**
 
-> **TL;DR:** [1-sentence summary of the week]
+> **TL;DR:** [1-sentence summary of the week across all workspaces]
 
 ---
 
 ## Highlights
-- [most impactful items completed this week]
+- [most impactful items completed this week, with brief what/why]
 
-## Completed ([count] items)
-- ✅ [task] in **[workspace]** ([day completed])
+## ✅ Completed ([count] items)
+- **[workspace]** [What the issue was] → [What was done] ([day completed])
 
-## Still In Progress
-- 🔄 [task] in **[workspace]** (started [day])
+## 🔄 Still In Progress
+- **[workspace]** [What the issue is] → [Current status] (started [day])
 
-## Carried Over
-- 📌 [items that were pending all week]
+## 📌 Carried Over
+- **[workspace]** [items that were pending all week]
 
 ## Next Week
-- 📌 [top priority pending items]
+- **[workspace]** [top priority pending items]
 
 ---
 
@@ -106,27 +129,29 @@ Gather information from these locations (in order):
 
 ### Daily
 1. Read `~/.command-center/todos.md`
-2. Read recent task files from `task-history/` (modified in last 24h)
-3. Read previous standup (if exists) to detect carryovers
-4. Build the standup
-5. Save to `~/.command-center/standups/YYYY-MM-DD.md`
-6. Display to user
+2. Scan ALL folders in `task-history/` (not just current workspace)
+3. For each recent task file, read the TL;DR and progress to understand what was done
+4. Read previous standup (if exists) to detect carryovers
+5. Build the standup grouped by workspace within each section
+6. Save to `~/.command-center/standups/YYYY-MM-DD.md`
+7. Display to user
 
 ### Weekly
 1. Determine work week range from `preferences.workWeek` (e.g., Mon–Fri or Sun–Thu)
 2. Read all daily standups from that range
 3. If daily standups exist, aggregate them
-4. If not, fall back to todos + task history for those days
+4. If not, fall back to todos + ALL task history for those days
 5. Save to `~/.command-center/standups/YYYY-Www.md`
 6. Display to user
 
 ## Smart Behaviors
 
+- **Cross-workspace always:** Never limit standup to just the current workspace — always scan all
+- **Human-readable descriptions:** Always explain what the issue was + what was done, never just ticket IDs
 - **Carryover detection:** If an item was "In Progress" yesterday and still is, note it
 - **Stale item alerts:** In progress for 3+ days → flag in Notes
 - **Empty standup:** No activity found → "Quiet day yesterday" — don't fabricate items
 - **PR linking:** Task files with PR URLs → include in Done items
-- **Cross-workspace:** Standups span all workspaces, grouped within each section
 
 ## Auto-Prompt Rules
 
