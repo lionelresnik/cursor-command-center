@@ -97,7 +97,7 @@ Before making any file change, tell the user what you're about to do and wait fo
 > "I'm about to update `[filename]` — [one line describing what will change]. OK?"
 
 Examples:
-> "I'm about to update `task-history/cspm/SLK-110873-gcp-org-onboarding-issues.md` — marking the GCP scheduler fix as complete and adding today's testing results. OK?"
+> "I'm about to update `task-history/backend/PROJ-123-auth-retry-fix.md` — marking the retry logic implementation as complete. OK?"
 
 > "I'm about to create `standups/2026-03-09.md` — your daily standup for today. OK?"
 
