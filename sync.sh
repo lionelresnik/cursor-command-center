@@ -8,8 +8,8 @@
 # with new features without recreating workspaces.
 #
 # Usage:
-#   ./sync.sh              # Full sync (plugin components + data files + workspace fixes)
-#   ./sync.sh --plugin     # Only sync plugin components
+#   ./sync.sh              # Full sync (built-in components → ~/.command-center + data + workspaces)
+#   ./sync.sh --plugin     # Developer only: sync from local plugin repo into CLI's .cursor/
 #   ./sync.sh --data       # Only initialize data files
 #   ./sync.sh --workspaces # Only fix workspace files
 
@@ -63,80 +63,144 @@ print_error() {
     echo -e "${RED}✗${NC}  $1"
 }
 
-sync_plugin_components() {
-    print_step "Syncing Plugin Components"
-    
-    if [ ! -d "$PLUGIN_DIR" ]; then
-        print_info "Plugin repo not found at $PLUGIN_DIR"
-        print_info "Using built-in plugin files (all features included)"
-        print_info ""
-        print_info "Note: Plugin sync is optional and only needed for developers"
-        print_info "who want to test unreleased plugin features."
-        return 0
-    fi
-    
-    print_info "Found plugin at: $PLUGIN_DIR"
-    
-    # Create .cursor structure
-    mkdir -p "$CURSOR_DIR/rules" "$CURSOR_DIR/skills" "$CURSOR_DIR/agents" "$CURSOR_DIR/hooks" "$CURSOR_DIR/scripts" "$ASSETS_DIR"
-    
+sync_builtin_components() {
+    print_step "Syncing Built-in Components"
+
+    local DEST_DIR="$HOME/.command-center/.cursor"
+    local DEST_ASSETS="$HOME/.command-center/assets"
+
+    mkdir -p "$DEST_DIR/rules" "$DEST_DIR/skills" "$DEST_DIR/agents" "$DEST_DIR/hooks" "$DEST_DIR/scripts" "$DEST_ASSETS"
+
     local added_count=0
     local updated_count=0
     local unchanged_count=0
-    
-    # Helper function to sync files and track changes
-    sync_files() {
+
+    # Helper: sync a flat directory of files
+    sync_flat() {
         local src_dir="$1"
         local dest_dir="$2"
         local pattern="$3"
-        local category="$4"
-        
-        local changes=()
-        
+
         for src_file in "$src_dir"/$pattern; do
             [ -e "$src_file" ] || continue
             local filename=$(basename "$src_file")
             local dest_file="$dest_dir/$filename"
-            
+
             if [ ! -f "$dest_file" ]; then
-                cp -r "$src_file" "$dest_file"
-                changes+=("${GREEN}+${NC} $filename ${DIM}(new)${NC}")
+                cp "$src_file" "$dest_file"
+                echo -e "  ${GREEN}+${NC} $filename ${DIM}(new)${NC}"
                 ((added_count++))
             elif ! cmp -s "$src_file" "$dest_file"; then
-                cp -r "$src_file" "$dest_file"
-                changes+=("${YELLOW}↻${NC} $filename ${DIM}(modified)${NC}")
+                cp "$src_file" "$dest_file"
+                echo -e "  ${YELLOW}↻${NC} $filename ${DIM}(modified)${NC}"
                 ((updated_count++))
             else
                 ((unchanged_count++))
             fi
         done
-        
-        # Print changes for this category
-        if [ ${#changes[@]} -gt 0 ]; then
-            for change in "${changes[@]}"; do
-                echo -e "  $change"
-            done
-        fi
     }
-    
+
     # Sync rules
-    if [ -d "$PLUGIN_DIR/rules" ]; then
-        sync_files "$PLUGIN_DIR/rules" "$CURSOR_DIR/rules" "*.mdc" "rules"
-    fi
-    
+    sync_flat "$CURSOR_DIR/rules" "$DEST_DIR/rules" "*.mdc"
+
     # Sync skills (directory-based)
+    for skill_dir in "$CURSOR_DIR/skills"/*; do
+        [ -d "$skill_dir" ] || continue
+        local skill_name=$(basename "$skill_dir")
+        mkdir -p "$DEST_DIR/skills/$skill_name"
+
+        for skill_file in "$skill_dir"/*; do
+            [ -f "$skill_file" ] || continue
+            local filename=$(basename "$skill_file")
+            local dest_file="$DEST_DIR/skills/$skill_name/$filename"
+
+            if [ ! -f "$dest_file" ]; then
+                cp "$skill_file" "$dest_file"
+                echo -e "  ${GREEN}+${NC} skills/$skill_name/$filename ${DIM}(new)${NC}"
+                ((added_count++))
+            elif ! cmp -s "$skill_file" "$dest_file"; then
+                cp "$skill_file" "$dest_file"
+                echo -e "  ${YELLOW}↻${NC} skills/$skill_name/$filename ${DIM}(modified)${NC}"
+                ((updated_count++))
+            else
+                ((unchanged_count++))
+            fi
+        done
+    done
+
+    # Sync agents
+    [ -d "$CURSOR_DIR/agents" ] && sync_flat "$CURSOR_DIR/agents" "$DEST_DIR/agents" "*.md"
+
+    # Sync hooks
+    [ -d "$CURSOR_DIR/hooks" ] && sync_flat "$CURSOR_DIR/hooks" "$DEST_DIR/hooks" "*"
+
+    # Sync assets
+    [ -d "$ASSETS_DIR" ] && sync_flat "$ASSETS_DIR" "$DEST_ASSETS" "*"
+
+    echo ""
+    if [ $added_count -gt 0 ] || [ $updated_count -gt 0 ]; then
+        print_success "Sync complete: $added_count added, $updated_count updated, $unchanged_count unchanged"
+    else
+        print_success "All files up to date ($unchanged_count files)"
+    fi
+}
+
+sync_from_plugin() {
+    print_step "Syncing from Plugin Repo (developer mode)"
+
+    if [ ! -d "$PLUGIN_DIR" ]; then
+        print_error "Plugin repo not found at $PLUGIN_DIR"
+        print_info "Clone cursor-command-center-plugin next to this repo to use --plugin"
+        return 1
+    fi
+
+    print_info "Found plugin at: $PLUGIN_DIR"
+
+    local DEST_DIR="$CURSOR_DIR"
+    local added_count=0
+    local updated_count=0
+    local unchanged_count=0
+
+    sync_files() {
+        local src_dir="$1"
+        local dest_dir="$2"
+        local pattern="$3"
+
+        for src_file in "$src_dir"/$pattern; do
+            [ -e "$src_file" ] || continue
+            local filename=$(basename "$src_file")
+            local dest_file="$dest_dir/$filename"
+
+            if [ ! -f "$dest_file" ]; then
+                cp -r "$src_file" "$dest_file"
+                echo -e "  ${GREEN}+${NC} $filename ${DIM}(new)${NC}"
+                ((added_count++))
+            elif ! cmp -s "$src_file" "$dest_file"; then
+                cp -r "$src_file" "$dest_file"
+                echo -e "  ${YELLOW}↻${NC} $filename ${DIM}(modified)${NC}"
+                ((updated_count++))
+            else
+                ((unchanged_count++))
+            fi
+        done
+    }
+
+    mkdir -p "$DEST_DIR/rules" "$DEST_DIR/skills" "$DEST_DIR/agents" "$DEST_DIR/hooks"
+
+    [ -d "$PLUGIN_DIR/rules" ]   && sync_files "$PLUGIN_DIR/rules"   "$DEST_DIR/rules"   "*.mdc"
+    [ -d "$PLUGIN_DIR/agents" ]  && sync_files "$PLUGIN_DIR/agents"  "$DEST_DIR/agents"  "*.md"
+    [ -d "$PLUGIN_DIR/hooks" ]   && sync_files "$PLUGIN_DIR/hooks"   "$DEST_DIR/hooks"   "*"
+    [ -d "$PLUGIN_DIR/assets" ]  && sync_files "$PLUGIN_DIR/assets"  "$ASSETS_DIR"       "*"
+
     if [ -d "$PLUGIN_DIR/skills" ]; then
         for skill_dir in "$PLUGIN_DIR/skills"/*; do
             [ -d "$skill_dir" ] || continue
             local skill_name=$(basename "$skill_dir")
-            local dest_skill_dir="$CURSOR_DIR/skills/$skill_name"
-            mkdir -p "$dest_skill_dir"
-            
+            mkdir -p "$DEST_DIR/skills/$skill_name"
             for skill_file in "$skill_dir"/*; do
                 [ -f "$skill_file" ] || continue
                 local filename=$(basename "$skill_file")
-                local dest_file="$dest_skill_dir/$filename"
-                
+                local dest_file="$DEST_DIR/skills/$skill_name/$filename"
                 if [ ! -f "$dest_file" ]; then
                     cp "$skill_file" "$dest_file"
                     echo -e "  ${GREEN}+${NC} skills/$skill_name/$filename ${DIM}(new)${NC}"
@@ -151,68 +215,23 @@ sync_plugin_components() {
             done
         done
     fi
-    
-    # Sync agents
-    if [ -d "$PLUGIN_DIR/agents" ]; then
-        sync_files "$PLUGIN_DIR/agents" "$CURSOR_DIR/agents" "*.md" "agents"
-    fi
-    
-    # Sync hooks
-    if [ -d "$PLUGIN_DIR/hooks" ]; then
-        sync_files "$PLUGIN_DIR/hooks" "$CURSOR_DIR/hooks" "*" "hooks"
-    fi
-    
-    # Sync scripts
-    if [ -d "$PLUGIN_DIR/scripts" ]; then
-        for script in "$PLUGIN_DIR/scripts"/*.sh; do
-            [ -f "$script" ] || continue
-            local filename=$(basename "$script")
-            local dest_file="$CURSOR_DIR/scripts/$filename"
-            
-            if [ ! -f "$dest_file" ]; then
-                cp "$script" "$dest_file"
-                chmod +x "$dest_file"
-                echo -e "  ${GREEN}+${NC} scripts/$filename ${DIM}(new)${NC}"
-                ((added_count++))
-            elif ! cmp -s "$script" "$dest_file"; then
-                cp "$script" "$dest_file"
-                chmod +x "$dest_file"
-                echo -e "  ${YELLOW}↻${NC} scripts/$filename ${DIM}(modified)${NC}"
-                ((updated_count++))
-            else
-                ((unchanged_count++))
-            fi
-        done
-    fi
-    
-    # Sync assets
-    if [ -d "$PLUGIN_DIR/assets" ]; then
-        sync_files "$PLUGIN_DIR/assets" "$ASSETS_DIR" "*" "assets"
-    fi
-    
-    # Verify graph.sh is available for @lu (--mermaid-file support)
-    if [ -f "$SCRIPT_DIR/graph.sh" ]; then
-        chmod +x "$SCRIPT_DIR/graph.sh"
-    fi
-    
-    # Fix easter-egg.mdc path reference
-    if [ -f "$CURSOR_DIR/rules/easter-egg.mdc" ]; then
+
+    # Fix easter-egg.mdc path for CLI usage
+    if [ -f "$DEST_DIR/rules/easter-egg.mdc" ]; then
         if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' 's|assets/easter-egg-art.md|~/.command-center/assets/easter-egg-art.md|g' "$CURSOR_DIR/rules/easter-egg.mdc" 2>/dev/null || true
+            sed -i '' 's|assets/easter-egg-art.md|~/.command-center/assets/easter-egg-art.md|g' "$DEST_DIR/rules/easter-egg.mdc" 2>/dev/null || true
         else
-            sed -i 's|assets/easter-egg-art.md|~/.command-center/assets/easter-egg-art.md|g' "$CURSOR_DIR/rules/easter-egg.mdc" 2>/dev/null || true
+            sed -i 's|assets/easter-egg-art.md|~/.command-center/assets/easter-egg-art.md|g' "$DEST_DIR/rules/easter-egg.mdc" 2>/dev/null || true
         fi
     fi
-    
+
     echo ""
-    # Print summary
     if [ $added_count -gt 0 ] || [ $updated_count -gt 0 ]; then
-        print_success "Sync complete: $added_count added, $updated_count updated, $unchanged_count unchanged"
+        print_success "Plugin sync complete: $added_count added, $updated_count updated, $unchanged_count unchanged"
+        print_info "Run ./sync.sh (no flags) to push these to ~/.command-center"
     else
-        print_success "All files up to date ($unchanged_count files)"
+        print_success "All plugin files already up to date ($unchanged_count files)"
     fi
-    
-    return 0
 }
 
 init_data_files() {
@@ -336,7 +355,8 @@ main() {
     
     case "$mode" in
         --plugin)
-            sync_plugin_components
+            # Developer mode: sync from local plugin repo into CLI's .cursor/
+            sync_from_plugin
             ;;
         --data)
             init_data_files
@@ -345,20 +365,11 @@ main() {
             fix_workspace_files
             ;;
         *)
-            # Full sync
-            local plugin_synced=false
-            sync_plugin_components && plugin_synced=true
+            # Full sync: copy CLI's built-in .cursor/ files to ~/.command-center/
+            sync_builtin_components
             init_data_files
             fix_workspace_files
-            
-            if [ "$plugin_synced" = true ]; then
-                show_completion
-            else
-                echo ""
-                print_warning "Plugin components not synced (plugin repo not found)"
-                print_info "Data files and workspaces were updated"
-                echo ""
-            fi
+            show_completion
             ;;
     esac
 }
