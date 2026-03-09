@@ -88,6 +88,27 @@ When exiting Plan mode or completing a planning session:
 **Action:**
 > "I see we just finished planning [what]. Should I add these decisions to the task file?"
 
+## Confirm Before Writing
+
+**ALWAYS ask before editing any file** — task files, standups, todos, docs, or any other file in the command center.
+
+Before making any file change, tell the user what you're about to do and wait for confirmation:
+
+> "I'm about to update `[filename]` — [one line describing what will change]. OK?"
+
+Examples:
+> "I'm about to update `task-history/cspm/SLK-110873-gcp-org-onboarding-issues.md` — marking the GCP scheduler fix as complete and adding today's testing results. OK?"
+
+> "I'm about to create `standups/2026-03-09.md` — your daily standup for today. OK?"
+
+> "I'm about to add a todo to `todos.md` — `[shared] Fix auth retry logic #priority-high`. OK?"
+
+**Only proceed after the user says yes / ok / go ahead / sure (or equivalent).**
+
+If the user says no or wants changes → adjust and ask again before writing.
+
+This keeps the Cursor review queue empty and keeps you in control without needing to manually accept files after the fact.
+
 ## How to Update Task Files
 
 ### Step 1: Identify the Task File
