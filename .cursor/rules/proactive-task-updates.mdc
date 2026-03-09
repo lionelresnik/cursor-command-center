@@ -33,7 +33,35 @@ When `gh pr create` is executed:
 - Capture the PR URL and title
 - Update the task file automatically (this is already handled by pr-linking.mdc)
 
-### 4. When User Says They're Done
+### 4. After PR Merged
+When a PR is merged — either the agent ran `gh pr merge` successfully, or the user says things like:
+- "I merged it", "merged the PR", "it's merged", "just merged"
+
+**Action:**
+1. Run `git status` on the relevant repo to check for uncommitted changes
+2. Detect the default branch: `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'`
+
+**If working tree is clean:**
+> "PR merged! Want me to switch to `[main/master]` and pull the latest?"
+
+If yes → run `git checkout [branch] && git pull origin [branch]`
+
+**If there are uncommitted changes**, list them and ask:
+> "There are uncommitted changes in this repo:
+> - `file1.go` (modified)
+> - `file2.go` (modified)
+>
+> What do you want to do?
+> a) Stash them, switch to `[main/master]`, then restore
+> b) Discard them and switch to `[main/master]`
+> c) Keep working on this branch for now"
+
+Then act based on the user's choice:
+- **a)** `git stash && git checkout [branch] && git pull origin [branch] && git stash pop`
+- **b)** `git checkout -- . && git checkout [branch] && git pull origin [branch]`
+- **c)** Do nothing
+
+### 5. When User Says They're Done
 When the user says things like:
 - "I'm done with [task]"
 - "Finished [subtask]"
@@ -42,7 +70,7 @@ When the user says things like:
 
 **Action:** Immediately update the task file and mark items as complete.
 
-### 5. After Completing Todos
+### 6. After Completing Todos
 When a todo is marked as done (moved to Done section):
 - Check if the todo has a ticket tag (e.g., `#PROJ-123`)
 - If yes, update the corresponding task file with the completed work
@@ -51,7 +79,7 @@ When a todo is marked as done (moved to Done section):
 **Action:**
 > "Marked todo as done. Updated task file [filename] to reflect this progress."
 
-### 6. After Plan Mode Sessions
+### 7. After Plan Mode Sessions
 When exiting Plan mode or completing a planning session:
 - Detect if a plan was created or decisions were made
 - Check if there's a related task file
