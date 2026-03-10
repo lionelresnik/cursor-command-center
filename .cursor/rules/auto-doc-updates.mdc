@@ -5,9 +5,11 @@ alwaysApply: true
 
 # Auto Doc Updates
 
-## When to Trigger
+## Trigger Inline — Don't Wait
 
-After any session where the agent read source files, configs, or ran shell commands to answer a question or investigate behavior, check: **is this finding already documented?**
+**Do NOT wait until end of conversation.** Trigger immediately when the finding occurs — inline, as part of the response where the discovery happens.
+
+The agent already knows when it discovered something new — it just read code or config to answer a question. At that moment, before moving on, check: **is this in `docs/[workspace]/`?** If not → document it immediately.
 
 Trigger when the agent:
 
@@ -16,33 +18,29 @@ Trigger when the agent:
 - Ran shell commands to investigate behavior
 - Explored a service, endpoint, API, or config to answer "how does X work?"
 
-**At end of response**, check if the answer is in `docs/[workspace]/`. If not:
-> "I just discovered how [topic] works by reading the source. Want me to add this to the docs?"
-
-If user says yes (or doesn't object within the same conversation) → document it automatically.
+**Immediately after answering**, check if the finding is in `docs/[workspace]/`. If not, document it without asking and tell the user:
+> "Adding this to `docs/[workspace]/[doc].md` for future reference."
 
 ### 2. Found something contradicting existing docs
 - Agent reads a doc, then finds the code says something different
 - Previous assumption turns out to be wrong
 
-**Immediately flag it:**
-> "⚠️ The docs say [X] but the code shows [Y]. Want me to update the doc?"
+**Immediately flag and fix:**
+> "⚠️ The docs say [X] but the code shows [Y] — updating the doc."
 
 ### 3. Implemented a new feature
 - Agent created/modified files for a new feature
 - PR was opened for new functionality
 
-**After the work is done:**
-> "I'll add [feature name] to the docs — creating/updating `docs/[workspace]/[relevant-doc].md`."
-
-Do this automatically (new content = no confirm needed, per proactive-task-updates rule).
+**After the work is done**, automatically document it:
+> "Adding [feature] to `docs/[workspace]/[relevant-doc].md`."
 
 ### 4. Discovered undocumented behavior during a task
-- While working on Task A, agent discovers Service B does something unexpected
-- Agent finds a config flag, env var, or API behavior not mentioned anywhere in docs
+- While working on Task A, agent discovers behavior, config, or API not mentioned in docs
+- Finding is general knowledge — useful beyond the current task
 
-**Inline, as part of the response:**
-> "Worth noting: [finding]. I'll add this to `docs/[workspace]/[doc].md`."
+**Inline, immediately:**
+> "Worth noting: [finding] — adding to `docs/[workspace]/[doc].md`."
 
 ---
 
@@ -81,6 +79,27 @@ When later evidence confirms an assumption:
 3. Tell the user: "Updated `[doc]` — confirmed [finding] is accurate."
 
 ---
+
+## Task File vs Docs — Critical Distinction
+
+**NEVER write general findings into a task file.** Task files are for tracking work on a specific ticket/task. Docs are for knowledge that's useful beyond the current task.
+
+| Content | Goes in | Example |
+|---------|---------|---------|
+| "What I did to fix this ticket" | `task-history/[workspace]/` | Steps taken, PRs opened, decisions made |
+| "How this system/feature works" | `docs/[workspace]/` | Behavior, architecture, how-to, FAQ |
+| "Found this while fixing ticket X, useful for future" | **Both** | `docs/` gets the full finding, task file gets a link |
+
+### Decision rule
+Ask: *"Would this be useful to someone who has nothing to do with this ticket?"*
+- **Yes** → write to `docs/[workspace]/`, add a link in the task file
+- **No** → write to task file only
+
+### Examples
+- GCP SA key requirements during onboarding → **docs/** (general knowledge)
+- "Added retry logic to fix SLK-123" → **task file** (task-specific)
+- "Discovered rate limiting is per-tenant" → **docs/** (general knowledge, link from task)
+- "Renamed variable in auth.go" → **task file** (task-specific)
 
 ## Where to Document
 

@@ -26,14 +26,16 @@ https://github.com/user-attachments/assets/5455e674-f622-4ffa-bec8-d25aa0d38b19
 | 📁 **Project Groups** | Organize repos into contexts (Backend, Frontend, etc.) |
 | 🔄 **Deep Scanning** | Finds nested repos (5 levels deep) |
 | 📊 **Repo Status** | See git status across all repos at a glance |
-| 📝 **Knowledge Base** | Task history + docs organized by workspace |
+| 📝 **Knowledge Base** | Task history + docs organized by workspace — auto-updated as you work |
 | 🔗 **PR Auto-Linking** | PRs automatically linked to task files |
 | 🗺️ **Dependency Graph** | Visualize service architecture (no tokens!) |
 | 🚀 **Quick Re-open** | Jump back to your last workspace instantly |
-| ✅ **Todo List** | Persistent todos with priorities, workspace tagging, ticket linking, source tracking |
-| 📋 **Standups** | Daily and weekly standup summaries with work week awareness |
+| ✅ **Todo List** | Persistent todos with priorities, workspace tagging, ticket linking (`#PROJ-123`) |
+| 📋 **Standups** | Cross-workspace daily/weekly summaries — always fresh, human-readable |
 | 🎭 **Personalization** | Remembers your name, work schedule, greets you based on time of day |
 | 📦 **Export/Import** | Backup and transfer your full setup (including todos + standups) |
+| 📖 **Auto-Doc Updates** | Findings from investigations auto-saved to `docs/` with confidence levels |
+| 🔀 **PR Merge Detection** | Detects merged PRs and offers to switch to main + pull |
 
 ---
 
@@ -160,14 +162,15 @@ git pull
 ```
 
 **What `sync.sh` does:**
-- ✅ Installs/updates plugin components (@lu, rules, skills, hooks)
+- ✅ Cleans up stale duplicate directories from old installs
+- ✅ Syncs assets (easter egg art, etc.)
 - ✅ Initializes new data files (profile.json, session-state.json, standups/)
 - ✅ Fixes workspace files (e.g., tilde path issues)
 - ✅ Works for existing setups — no need to recreate workspaces
 
 **Partial sync options:**
 ```bash
-./sync.sh --plugin      # Only sync plugin components
+./sync.sh --plugin      # Developer only: sync from local plugin repo into CLI's .cursor/
 ./sync.sh --data        # Only initialize data files
 ./sync.sh --workspaces  # Only fix workspace files
 ```
@@ -420,6 +423,7 @@ Understanding when to use `@Codebase` will save you time AND tokens (money!):
 cursor-command-center/
 ├── cc                # Main command wrapper (./cc open, ./cc status, etc.)
 ├── setup.sh          # First-time setup wizard
+├── sync.sh           # Sync/upgrade existing installs
 ├── open.sh           # Workspace launcher
 ├── status.sh         # Git status checker
 ├── manage.sh         # Add/remove repos, export/import
@@ -432,38 +436,41 @@ cursor-command-center/
 ├── workspaces/       # Generated .code-workspace files
 ├── contexts/         # Project group definitions
 │
-├── task-history/     # Work logs (by workspace)
+├── task-history/     # Work logs (by workspace) — auto-created by @lu
 │   ├── frontend/
 │   ├── backend/
 │   └── shared/
 │
-├── docs/             # Reference docs (by workspace)
+├── docs/             # Reference docs (by workspace) — auto-updated by @lu
 │   ├── frontend/
 │   ├── backend/
 │   └── shared/
 │
 ├── todos.md          # Persistent todo list (In Progress / Pending / Done)
 ├── standups/         # Daily and weekly standup summaries
+├── assets/           # Static assets (easter egg art, etc.)
 │
-└── .cursor/rules/    # AI rules for all sessions
+└── .cursor/
+    ├── rules/        # Always-on AI rules (@lu, task tracking, standups, etc.)
+    └── skills/       # @lu capabilities (workspace, graph, todos, standups, etc.)
 ```
 
 ---
 
 ## 📝 Knowledge Base (Task History + Docs)
 
-Your local knowledge base is organized by workspace:
+Your local knowledge base is organized by workspace and **grows automatically as you work**:
 
 ```
-task-history/                    # Work logs (what you did)
+task-history/                    # Work logs (what you did on specific tasks)
 ├── frontend/
-│   └── ABC-1234-fix-auth.md
+│   └── PROJ-123-fix-auth.md
 ├── backend/
-│   └── DEF-456-add-api.md
+│   └── PROJ-456-add-api.md
 └── shared/                      # Cross-workspace tasks
     └── general-refactor.md
 
-docs/                            # Reference guides (how to do things)
+docs/                            # Reference guides (general knowledge)
 ├── frontend/
 │   └── api-integration.md
 ├── backend/
@@ -472,15 +479,24 @@ docs/                            # Reference guides (how to do things)
     └── setup-guide.md
 ```
 
-**All content is local-only** (gitignored) - safe for credentials!
+**All content is local-only** (gitignored) — safe for internal info.
 
-| Type | Purpose | Example |
-|------|---------|---------|
-| `task-history/` | Work logs, decisions | "What I did" |
-| `docs/` | Reference guides | "How to do X" |
-| `todos.md` | Persistent todo list | "What's next" |
-| `standups/` | Standup summaries | "What did I do this week" |
-| `shared/` | Cross-workspace | General content |
+| Type | Purpose | Example | Auto-created? |
+|------|---------|---------|---------------|
+| `task-history/` | Work logs, decisions | "What I did on ticket X" | ✅ Yes |
+| `docs/` | Reference guides, findings | "How service Y works" | ✅ Yes |
+| `todos.md` | Persistent todo list | "What's next" | ✅ Yes |
+| `standups/` | Standup summaries | "What did I do this week" | ✅ Yes |
+
+### Auto-Doc Updates
+
+When `@lu` investigates something by reading source code, it automatically documents the finding in `docs/[workspace]/` — not in the task file. Findings are tagged with confidence levels:
+
+- *(no tag)* — ✅ Confirmed — verified in source code or tested
+- `> ⚠️ Assumed` — inferred, not yet verified
+- `> 🔍 Investigating` — partially known, contradictory evidence
+
+Assumed findings are automatically upgraded to confirmed when later verified.
 
 **Backup:** `./cc export` includes your knowledge base, todos, and standups
 **Reference:** `@task-history "What did we decide about auth?"`
@@ -498,14 +514,16 @@ docs/                            # Reference guides (how to do things)
 
 ---
 
-## 🔌 Also Available: Cursor Extension
+## 🔌 Also Available: Cursor Plugin
 
-For a GUI-based experience integrated directly into Cursor, check out the **Command Center Extension**:
+For a marketplace plugin with the same features (and more) installed directly through Cursor, check out **Command Center**:
 
 - [GitHub: cursor-command-center-plugin](https://github.com/lionelresnik/cursor-command-center-plugin)
 <!-- - [Cursor Marketplace](marketplace-link-pending) -->
 
-The extension provides the same multi-repo management features with a visual interface inside Cursor.
+The plugin provides the same capabilities as this CLI, installed through the Cursor Marketplace with no git cloning required. If both are installed, prefer the plugin — it integrates deeper with Cursor's tooling.
+
+**Migrating from CLI to plugin?** Once you install the plugin from the Marketplace, use `@lu migrate from CLI` and Lucius will guide you through removing CLI files while preserving all your data (`task-history/`, `docs/`, `todos.md`, `standups/`).
 
 ---
 
