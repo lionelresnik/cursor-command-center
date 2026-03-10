@@ -90,22 +90,24 @@ When exiting Plan mode or completing a planning session:
 
 ## Confirm Before Writing
 
-**ALWAYS ask before editing any file** — task files, standups, todos, docs, or any other file in the command center.
+**Creating new files = automatic.** No confirmation needed for:
+- New task files in `task-history/`
+- New standup files in `standups/`
+- New todo entries added to `todos.md`
+- New docs
 
-Before making any file change, tell the user what you're about to do and wait for confirmation:
+Just create them and tell the user: "Created `[filename]` — [one line what's in it]."
+
+**Updating existing files = confirm first.** Before modifying a file that already exists:
 
 > "I'm about to update `[filename]` — [one line describing what will change]. OK?"
 
 Examples:
 > "I'm about to update `task-history/backend/PROJ-123-auth-retry-fix.md` — marking the retry logic implementation as complete. OK?"
 
-> "I'm about to create `standups/2026-03-09.md` — your daily standup for today. OK?"
+> "I'm about to update `todos.md` — marking auth retry logic as done. OK?"
 
-> "I'm about to add a todo to `todos.md` — `[shared] Fix auth retry logic #priority-high`. OK?"
-
-**Only proceed after the user says yes / ok / go ahead / sure (or equivalent).**
-
-If the user says no or wants changes → adjust and ask again before writing.
+**Only wait for confirmation when updating an existing file.** If user says no → adjust and ask again.
 
 This keeps the Cursor review queue empty and keeps you in control without needing to manually accept files after the fact.
 
