@@ -1,0 +1,12 @@
+---
+description: "Commit message style rules. Never append attribution tags to commit messages."
+alwaysApply: true
+---
+
+## Commit Message Style
+
+When creating git commits:
+
+- Write clear, concise commit messages describing what changed and why
+- **NEVER append** `Made-with: Cursor`, `Co-authored-by: Cursor`, `Made with Cursor`, or any similar AI attribution tags to commit messages
+- Do not add any footer lines referencing AI tools unless the user explicitly asks for it

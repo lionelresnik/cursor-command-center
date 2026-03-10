@@ -29,6 +29,8 @@ When the user asks for a **weekly** standup or recap, append the current day nam
 
 **IMPORTANT: Standups are ALWAYS cross-workspace.** Read ALL workspaces, not just the current one.
 
+**IMPORTANT: ALWAYS regenerate the standup fresh from source data.** Never just display an existing saved standup file. Even if a standup file for today already exists, regenerate it from scratch by reading todos and task history — then update the file with the fresh content.
+
 Gather information from these locations (in order):
 
 1. **Todos** — `~/.command-center/todos.md`

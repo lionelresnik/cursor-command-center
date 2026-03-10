@@ -8,7 +8,7 @@
 # with new features without recreating workspaces.
 #
 # Usage:
-#   ./sync.sh              # Full sync (built-in components → ~/.command-center + data + workspaces)
+#   ./sync.sh              # Full sync (clean stale dirs + assets + data + workspace fixes)
 #   ./sync.sh --plugin     # Developer only: sync from local plugin repo into CLI's .cursor/
 #   ./sync.sh --data       # Only initialize data files
 #   ./sync.sh --workspaces # Only fix workspace files
@@ -63,85 +63,63 @@ print_error() {
     echo -e "${RED}✗${NC}  $1"
 }
 
-sync_builtin_components() {
-    print_step "Syncing Built-in Components"
+cleanup_stale_cursor_dirs() {
+    print_step "Cleaning Up Stale Directories"
 
-    local DEST_DIR="$HOME/.command-center/.cursor"
+    local cleaned=0
+
+    # Remove stale ~/.command-center/.cursor/ — rules/skills live in the repo, not here
+    if [ -d "$HOME/.command-center/.cursor" ]; then
+        rm -rf "$HOME/.command-center/.cursor"
+        print_success "Removed stale ~/.command-center/.cursor/"
+        cleaned=1
+    fi
+
+    # Remove stale ~/.command-center/workspaces/.cursor/ — old duplicate
+    if [ -d "$HOME/.command-center/workspaces/.cursor" ]; then
+        rm -rf "$HOME/.command-center/workspaces/.cursor"
+        print_success "Removed stale ~/.command-center/workspaces/.cursor/"
+        cleaned=1
+    fi
+
+    if [ $cleaned -eq 0 ]; then
+        print_info "No stale directories found"
+    fi
+}
+
+sync_assets() {
+    print_step "Syncing Assets"
+
     local DEST_ASSETS="$HOME/.command-center/assets"
-
-    mkdir -p "$DEST_DIR/rules" "$DEST_DIR/skills" "$DEST_DIR/agents" "$DEST_DIR/hooks" "$DEST_DIR/scripts" "$DEST_ASSETS"
+    mkdir -p "$DEST_ASSETS"
 
     local added_count=0
     local updated_count=0
     local unchanged_count=0
 
-    # Helper: sync a flat directory of files
-    sync_flat() {
-        local src_dir="$1"
-        local dest_dir="$2"
-        local pattern="$3"
+    for src_file in "$ASSETS_DIR"/*; do
+        [ -f "$src_file" ] || continue
+        local filename=$(basename "$src_file")
+        local dest_file="$DEST_ASSETS/$filename"
 
-        for src_file in "$src_dir"/$pattern; do
-            [ -e "$src_file" ] || continue
-            local filename=$(basename "$src_file")
-            local dest_file="$dest_dir/$filename"
-
-            if [ ! -f "$dest_file" ]; then
-                cp "$src_file" "$dest_file"
-                echo -e "  ${GREEN}+${NC} $filename ${DIM}(new)${NC}"
-                ((added_count++))
-            elif ! cmp -s "$src_file" "$dest_file"; then
-                cp "$src_file" "$dest_file"
-                echo -e "  ${YELLOW}↻${NC} $filename ${DIM}(modified)${NC}"
-                ((updated_count++))
-            else
-                ((unchanged_count++))
-            fi
-        done
-    }
-
-    # Sync rules
-    sync_flat "$CURSOR_DIR/rules" "$DEST_DIR/rules" "*.mdc"
-
-    # Sync skills (directory-based)
-    for skill_dir in "$CURSOR_DIR/skills"/*; do
-        [ -d "$skill_dir" ] || continue
-        local skill_name=$(basename "$skill_dir")
-        mkdir -p "$DEST_DIR/skills/$skill_name"
-
-        for skill_file in "$skill_dir"/*; do
-            [ -f "$skill_file" ] || continue
-            local filename=$(basename "$skill_file")
-            local dest_file="$DEST_DIR/skills/$skill_name/$filename"
-
-            if [ ! -f "$dest_file" ]; then
-                cp "$skill_file" "$dest_file"
-                echo -e "  ${GREEN}+${NC} skills/$skill_name/$filename ${DIM}(new)${NC}"
-                ((added_count++))
-            elif ! cmp -s "$skill_file" "$dest_file"; then
-                cp "$skill_file" "$dest_file"
-                echo -e "  ${YELLOW}↻${NC} skills/$skill_name/$filename ${DIM}(modified)${NC}"
-                ((updated_count++))
-            else
-                ((unchanged_count++))
-            fi
-        done
+        if [ ! -f "$dest_file" ]; then
+            cp "$src_file" "$dest_file"
+            echo -e "  ${GREEN}+${NC} $filename ${DIM}(new)${NC}"
+            ((added_count++))
+        elif ! cmp -s "$src_file" "$dest_file"; then
+            cp "$src_file" "$dest_file"
+            echo -e "  ${YELLOW}↻${NC} $filename ${DIM}(modified)${NC}"
+            ((updated_count++))
+        else
+            ((unchanged_count++))
+        fi
     done
-
-    # Sync agents
-    [ -d "$CURSOR_DIR/agents" ] && sync_flat "$CURSOR_DIR/agents" "$DEST_DIR/agents" "*.md"
-
-    # Sync hooks
-    [ -d "$CURSOR_DIR/hooks" ] && sync_flat "$CURSOR_DIR/hooks" "$DEST_DIR/hooks" "*"
-
-    # Sync assets
-    [ -d "$ASSETS_DIR" ] && sync_flat "$ASSETS_DIR" "$DEST_ASSETS" "*"
 
     echo ""
     if [ $added_count -gt 0 ] || [ $updated_count -gt 0 ]; then
-        print_success "Sync complete: $added_count added, $updated_count updated, $unchanged_count unchanged"
+        print_success "Assets synced: $added_count added, $updated_count updated, $unchanged_count unchanged"
     else
-        print_success "All files up to date ($unchanged_count files)"
+        print_success "All assets up to date ($unchanged_count files)"
     fi
 }
 
@@ -365,8 +343,9 @@ main() {
             fix_workspace_files
             ;;
         *)
-            # Full sync: copy CLI's built-in .cursor/ files to ~/.command-center/
-            sync_builtin_components
+            # Full sync: clean stale dirs, sync assets, init data, fix workspaces
+            cleanup_stale_cursor_dirs
+            sync_assets
             init_data_files
             fix_workspace_files
             show_completion
