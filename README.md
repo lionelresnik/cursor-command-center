@@ -11,7 +11,7 @@ A central hub for managing AI-assisted development across multiple repositories 
 
 <p align="center">
 
-https://github.com/user-attachments/assets/5455e674-f622-4ffa-bec8-d25aa0d38b19
+https://github.com/user-attachments/assets/b2a4e825-a402-43ba-aec9-27f6661588db
 
 </p>
 
