@@ -483,6 +483,35 @@ cleanup_cli_data() {
     fi
 }
 
+reopen_workspaces() {
+    print_step "Reopening Workspaces"
+
+    local ws_count=0
+    for ws_file in "$DATA_DIR/workspaces"/*.code-workspace; do
+        [ -f "$ws_file" ] || continue
+        ws_count=$((ws_count + 1))
+    done
+
+    if [ $ws_count -eq 0 ]; then
+        print_info "No workspace files found to open"
+        return 0
+    fi
+
+    print_info "Your workspaces moved to ~/.command-center/workspaces/ (hidden folder)."
+    print_info "Opening all $ws_count workspace(s) in Cursor now..."
+    echo ""
+
+    for ws_file in "$DATA_DIR/workspaces"/*.code-workspace; do
+        [ -f "$ws_file" ] || continue
+        local ws_name
+        ws_name=$(basename "$ws_file" .code-workspace)
+        open "$ws_file" 2>/dev/null || cursor "$ws_file" 2>/dev/null || true
+        echo -e "  ${GREEN}●${NC} Opened ${BOLD}$ws_name${NC}"
+    done
+
+    echo ""
+}
+
 show_completion() {
     echo ""
     echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════╗${NC}"
@@ -502,10 +531,25 @@ show_completion() {
     echo -e "  ${GREEN}●${NC} ${BOLD}PR Linking${NC} — Auto-captures PR URLs from git commands"
     echo -e "  ${GREEN}●${NC} ${BOLD}Easter Egg${NC} — Say 'batman' to @lu and see what happens"
     echo ""
-    echo -e "${CYAN}Next Steps:${NC}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BOLD}  IMPORTANT: About your existing Cursor chats${NC}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
-    echo -e "  1. Open any workspace in Cursor"
-    echo -e "  2. Type ${BOLD}@lu${NC} or ${BOLD}@lucius${NC} in chat"
+    echo -e "  Your workspaces have been reopened from the new location."
+    echo -e "  All your data (tasks, todos, docs, standups) is preserved."
+    echo ""
+    echo -e "  However, ${BOLD}existing agent chats won't carry over${NC} to the"
+    echo -e "  new workspace windows. Start a ${BOLD}new chat${NC} and the agent"
+    echo -e "  will automatically pick up all your data."
+    echo ""
+    echo -e "  ${CYAN}Tip:${NC} If you had important context in an old chat, you can"
+    echo -e "  ask that agent to summarize it, then paste the summary into"
+    echo -e "  a new chat in the reopened workspace."
+    echo ""
+    echo -e "${CYAN}Getting Started:${NC}"
+    echo ""
+    echo -e "  1. Pick any of the reopened workspace windows"
+    echo -e "  2. Start a new chat and type ${BOLD}@lu${NC} or ${BOLD}@lucius${NC}"
     echo -e "  3. Try: ${DIM}\"@lu what can you do?\"${NC}"
     echo ""
 }
@@ -532,6 +576,7 @@ main() {
             init_data_files
             fix_workspace_files
             cleanup_cli_data
+            reopen_workspaces
             show_completion
             ;;
     esac
