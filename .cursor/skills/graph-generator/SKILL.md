@@ -29,7 +29,7 @@ When user asks for an architecture graph:
    - Check `.cursor/cc-context.json` for `"workspace"` field
    - Check the open `.code-workspace` filename (e.g., `platform.code-workspace` → workspace is `platform`)
    - Ask the user
-2. Read the repo list from `contexts/[workspace].repos`
+2. Read the repo list from `~/.command-center/contexts/[workspace].repos`
 3. For each repo, scan for dependency files:
 
 ```bash
@@ -62,8 +62,8 @@ graph TB
     end
 ```
 
-6. Save the Mermaid source to `docs/[workspace]/architecture.md`
-7. Also generate an HTML file for browser viewing at `docs/[workspace]/architecture.html`:
+6. Save the Mermaid source to `~/.command-center/docs/[workspace]/architecture.md`
+7. Also generate an HTML file for browser viewing at `~/.command-center/docs/[workspace]/architecture.html`:
 
 If a previous HTML exists at `~/.command-center/docs/[workspace]/architecture.html`, use it as a template — replace only the Mermaid diagram and header text. Otherwise, generate a new HTML file with these features:
 - **ELK layout engine** via ES module imports for better node placement
@@ -73,43 +73,17 @@ If a previous HTML exists at `~/.command-center/docs/[workspace]/architecture.ht
 - **Click-to-highlight**: clicking a node highlights its full upstream/downstream flow chain, dims everything else, and shows an info panel with connections
 - **Frontmatter config** in the Mermaid code block for layout settings
 
-Save as `docs/[workspace]/architecture.html`.
+Save as `~/.command-center/docs/[workspace]/architecture.html`.
 
-8. Open the HTML file in the browser: `open docs/[workspace]/architecture.html`
+8. Open the HTML file in the browser: `open ~/.command-center/docs/[workspace]/architecture.html`
 
-## Using graph.sh (Preferred)
+## Generating the HTML
 
-If `~/.command-center/graph.sh` exists (installed by the CLI's `sync.sh`), use it instead of generating HTML manually. This gives you the full interactive HTML with working click-to-highlight, pan/zoom, and dark theme.
-
-### Workflow
-
-1. Follow steps 1-5 above to generate the Mermaid diagram (you are better at intelligent grouping and accurate connections than the script)
-2. Save your Mermaid code to a temp file:
-   ```bash
-   cat > /tmp/cc-mermaid.md << 'EOF'
-   (your generated Mermaid code here)
-   EOF
-   ```
-3. Run graph.sh with the `--mermaid-file` flag:
-   ```bash
-   ~/.command-center/graph.sh [workspace] --mermaid-file /tmp/cc-mermaid.md --open
-   ```
-4. graph.sh will wrap your Mermaid in the full interactive HTML and save both `.md` and `.html` files
-5. Clean up: `rm /tmp/cc-mermaid.md`
-
-### Why This Is Better
-
-- **You** generate the Mermaid diagram (intelligent grouping, rich labels, accurate connections)
-- **graph.sh** handles the HTML template (850+ lines of tested JS for click-to-highlight, BFS upstream/downstream, pan/zoom, dark theme, info panel)
-- Best of both worlds
-
-### Fallback
-
-If `graph.sh` is not available, generate the full HTML from scratch as described in step 7 above.
+Always generate the full interactive HTML from scratch as described in step 7 above — no external scripts needed.
 
 ## Output Format
 
-Save as a markdown file with a Mermaid code block at `docs/[workspace]/architecture.md`:
+Save as a markdown file with a Mermaid code block at `~/.command-center/docs/[workspace]/architecture.md`:
 
     # Architecture: [workspace]
 

@@ -19,7 +19,7 @@ If a ticket is discovered later:
 ## Step 2: Identify the Workspace
 
 Detect the workspace using these methods (in order):
-1. Check `.cursor/cc-context.json` for the `"workspace"` field
+1. Check `.cursor/cc-context.json` for the `"workspace"` field and `"task_history"` / `"docs"` paths
 2. Check the open `.code-workspace` filename (e.g., `platform.code-workspace` → `platform`)
 3. Ask the user
 
@@ -27,20 +27,24 @@ Only use `shared` if the user explicitly says the task spans multiple workspaces
 
 ## Step 3: Create Task File
 
-**Location:** `task-history/[WORKSPACE]/[TICKET]-description.md`
+**All data lives under `~/.command-center/`.** Never create task or doc files relative to the workspace root.
+
+**Location:** `~/.command-center/task-history/[WORKSPACE]/[TICKET]-description.md`
 
 Examples:
-- `task-history/frontend/ABC-1234-add-user-auth.md`
-- `task-history/backend/fix-login-bug.md`
-- `task-history/shared/cross-repo-refactor.md`
+- `~/.command-center/task-history/frontend/ABC-1234-add-user-auth.md`
+- `~/.command-center/task-history/backend/fix-login-bug.md`
+- `~/.command-center/task-history/shared/cross-repo-refactor.md`
 
-**For reference docs:** `docs/[WORKSPACE]/[name].md`
-- `docs/backend/database-connection-guide.md`
-- `docs/shared/deployment-guide.md`
+**For reference docs:** `~/.command-center/docs/[WORKSPACE]/[name].md`
+- `~/.command-center/docs/backend/database-connection-guide.md`
+- `~/.command-center/docs/shared/deployment-guide.md`
 
 Rules:
-- Tasks go in `task-history/[workspace]/`
-- Reference docs go in `docs/[workspace]/`
+- Tasks go in `~/.command-center/task-history/[workspace]/`
+- Reference docs go in `~/.command-center/docs/[workspace]/`
+- Todos go in `~/.command-center/todos.md`
+- Standups go in `~/.command-center/standups/`
 - Use `shared/` for cross-workspace content
 - Create the workspace folder if it doesn't exist
 
@@ -140,4 +144,4 @@ Never skip for: file creation/modification, docs, investigations, "save this for
 
 ## Re-evaluate
 
-If a task becomes a reference guide → move to `docs/[workspace]/`. If docs become a task → move to `task-history/[workspace]/`. Update frontmatter with `moved_from:` and tell the user.
+If a task becomes a reference guide → move to `~/.command-center/docs/[workspace]/`. If docs become a task → move to `~/.command-center/task-history/[workspace]/`. Update frontmatter with `moved_from:` and tell the user.

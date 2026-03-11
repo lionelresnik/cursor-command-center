@@ -9,7 +9,9 @@ alwaysApply: true
 
 **Do NOT wait until end of conversation.** Trigger immediately when the finding occurs — inline, as part of the response where the discovery happens.
 
-The agent already knows when it discovered something new — it just read code or config to answer a question. At that moment, before moving on, check: **is this in `docs/[workspace]/`?** If not → document it immediately.
+The agent already knows when it discovered something new — it just read code or config to answer a question. At that moment, before moving on, check: **is this in `~/.command-center/docs/[workspace]/`?** If not → document it immediately.
+
+**All paths are under `~/.command-center/`.** Never create docs relative to the workspace root.
 
 Trigger when the agent:
 
@@ -18,8 +20,8 @@ Trigger when the agent:
 - Ran shell commands to investigate behavior
 - Explored a service, endpoint, API, or config to answer "how does X work?"
 
-**Immediately after answering**, check if the finding is in `docs/[workspace]/`. If not, document it without asking and tell the user:
-> "Adding this to `docs/[workspace]/[doc].md` for future reference."
+**Immediately after answering**, check if the finding is in `~/.command-center/docs/[workspace]/`. If not, document it without asking and tell the user:
+> "Adding this to `~/.command-center/docs/[workspace]/[doc].md` for future reference."
 
 ### 2. Found something contradicting existing docs
 - Agent reads a doc, then finds the code says something different
@@ -86,8 +88,8 @@ When later evidence confirms an assumption:
 
 | Content | Goes in | Example |
 |---------|---------|---------|
-| "What I did to fix this ticket" | `task-history/[workspace]/` | Steps taken, PRs opened, decisions made |
-| "How this system/feature works" | `docs/[workspace]/` | Behavior, architecture, how-to, FAQ |
+| "What I did to fix this ticket" | `~/.command-center/task-history/[workspace]/` | Steps taken, PRs opened, decisions made |
+| "How this system/feature works" | `~/.command-center/docs/[workspace]/` | Behavior, architecture, how-to, FAQ |
 | "Found this while fixing ticket X, useful for future" | **Both** | `docs/` gets the full finding, task file gets a link |
 
 ### Decision rule
@@ -107,13 +109,13 @@ Use existing docs when possible. Create new ones only if no relevant doc exists.
 
 | Content type | Location |
 |-------------|----------|
-| Service behavior, architecture | `docs/[workspace]/[service]-overview.md` |
-| How-to guides, runbooks | `docs/[workspace]/[topic]-guide.md` |
-| Cross-workspace patterns | `docs/shared/[topic].md` |
-| Feature descriptions | `docs/[workspace]/features.md` or inline in relevant doc |
+| Service behavior, architecture | `~/.command-center/docs/[workspace]/[service]-overview.md` |
+| How-to guides, runbooks | `~/.command-center/docs/[workspace]/[topic]-guide.md` |
+| Cross-workspace patterns | `~/.command-center/docs/shared/[topic].md` |
+| Feature descriptions | `~/.command-center/docs/[workspace]/features.md` or inline in relevant doc |
 
 To find the right doc:
-1. Check `docs/[workspace]/` for existing files
+1. Check `~/.command-center/docs/[workspace]/` for existing files
 2. Pick the most relevant one based on topic
 3. Add a new section if the topic fits an existing doc
 4. Create a new file only if no existing doc covers it

@@ -91,10 +91,10 @@ When exiting Plan mode or completing a planning session:
 ## Confirm Before Writing
 
 **Creating new files = automatic.** No confirmation needed for:
-- New task files in `task-history/`
-- New standup files in `standups/`
-- New todo entries added to `todos.md`
-- New docs
+- New task files in `~/.command-center/task-history/[workspace]/`
+- New standup files in `~/.command-center/standups/`
+- New todo entries added to `~/.command-center/todos.md`
+- New docs in `~/.command-center/docs/[workspace]/`
 
 Just create them and tell the user: "Created `[filename]` — [one line what's in it]."
 
@@ -115,7 +115,7 @@ This keeps the Cursor review queue empty and keeps you in control without needin
 
 ### Step 1: Identify the Task File
 1. Check if there's an open task file in the current workspace
-2. Look for task files with `status: in-progress` in `task-history/[workspace]/`
+2. Look for task files with `status: in-progress` in `~/.command-center/task-history/[workspace]/`
 3. If multiple in-progress tasks, ask which one to update
 4. If no task file exists, ask if they want to create one
 

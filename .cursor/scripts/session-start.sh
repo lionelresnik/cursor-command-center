@@ -18,16 +18,25 @@ if [ -f "$PROFILE_FILE" ]; then
     [ -n "$ww" ] && work_week="$ww"
 fi
 
-# Check idle time
+# Check idle time — prefer lastSessionEnd, fall back to lastSessionStart
 idle_hours=0
 last_end=""
+last_start=""
+last_timestamp=""
 if [ -f "$STATE_FILE" ]; then
     last_end=$(grep -o '"lastSessionEnd"[[:space:]]*:[[:space:]]*"[^"]*"' "$STATE_FILE" 2>/dev/null | head -1 | sed 's/.*"\([0-9T:Z-]*\)".*/\1/' || echo "")
+    last_start=$(grep -o '"lastSessionStart"[[:space:]]*:[[:space:]]*"[^"]*"' "$STATE_FILE" 2>/dev/null | head -1 | sed 's/.*"\([0-9T:Z-]*\)".*/\1/' || echo "")
+    # Prefer lastSessionEnd (most accurate), fall back to lastSessionStart
     if [ -n "$last_end" ]; then
-        if date -j -f "%Y-%m-%dT%H:%M:%SZ" "$last_end" "+%s" >/dev/null 2>&1; then
-            last_ts=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$last_end" "+%s")
+        last_timestamp="$last_end"
+    elif [ -n "$last_start" ]; then
+        last_timestamp="$last_start"
+    fi
+    if [ -n "$last_timestamp" ]; then
+        if date -j -f "%Y-%m-%dT%H:%M:%SZ" "$last_timestamp" "+%s" >/dev/null 2>&1; then
+            last_ts=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$last_timestamp" "+%s")
         else
-            last_ts=$(date -d "$last_end" "+%s" 2>/dev/null || echo "0")
+            last_ts=$(date -d "$last_timestamp" "+%s" 2>/dev/null || echo "0")
         fi
         now_ts=$(date "+%s")
         if [ "$last_ts" != "0" ]; then
@@ -89,11 +98,11 @@ fi
 # Detect new day (compared to last session)
 is_new_day=false
 last_date=""
-if [ -n "$last_end" ]; then
-    if date -j -f "%Y-%m-%dT%H:%M:%SZ" "$last_end" "+%Y-%m-%d" >/dev/null 2>&1; then
-        last_date=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$last_end" "+%Y-%m-%d")
+if [ -n "$last_timestamp" ]; then
+    if date -j -f "%Y-%m-%dT%H:%M:%SZ" "$last_timestamp" "+%Y-%m-%d" >/dev/null 2>&1; then
+        last_date=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$last_timestamp" "+%Y-%m-%d")
     else
-        last_date=$(date -d "$last_end" "+%Y-%m-%d" 2>/dev/null || echo "")
+        last_date=$(date -d "$last_timestamp" "+%Y-%m-%d" 2>/dev/null || echo "")
     fi
 fi
 today_date=$(date "+%Y-%m-%d")
@@ -129,5 +138,15 @@ cat > "$CONTEXT_FILE" << EOF
   "isNewDay": $is_new_day,
   "isStartOfWeek": $is_start_of_week,
   "workWeek": "$work_week"
+}
+EOF
+
+# Write lastSessionStart so next session can calculate idle even if sessionEnd never fires
+current_state_workspace="$workspace"
+[ -z "$current_state_workspace" ] && current_state_workspace="$last_workspace"
+cat > "$STATE_FILE" << EOF
+{
+  "lastSessionStart": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "lastWorkspace": "$current_state_workspace"
 }
 EOF
