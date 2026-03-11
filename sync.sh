@@ -146,12 +146,6 @@ cleanup_stale() {
 
     local cleaned=0
 
-    if [ -d "$DATA_DIR/.cursor" ]; then
-        rm -rf "$DATA_DIR/.cursor"
-        print_success "Removed stale ~/.command-center/.cursor/"
-        cleaned=$((cleaned + 1))
-    fi
-
     if [ -d "$DATA_DIR/workspaces/.cursor" ]; then
         rm -rf "$DATA_DIR/workspaces/.cursor"
         print_success "Removed stale ~/.command-center/workspaces/.cursor/"
@@ -160,12 +154,54 @@ cleanup_stale() {
 
     if [ -f "$DATA_DIR/easter-egg-art.md" ]; then
         rm -f "$DATA_DIR/easter-egg-art.md"
-        print_success "Removed stale ~/. command-center/easter-egg-art.md (lives in assets/)"
+        print_success "Removed stale ~/.command-center/easter-egg-art.md (lives in assets/)"
         cleaned=$((cleaned + 1))
     fi
 
     if [ $cleaned -eq 0 ]; then
         print_info "No stale files found"
+    fi
+}
+
+sync_cursor_dir() {
+    print_step "Syncing .cursor/ (rules, skills, agents, hooks)"
+
+    local SRC="$CURSOR_DIR"
+    local DEST="$DATA_DIR/.cursor"
+
+    if [ ! -d "$SRC" ]; then
+        print_warning "No .cursor/ directory found in CLI repo"
+        return 0
+    fi
+
+    local added_count=0
+    local updated_count=0
+    local unchanged_count=0
+
+    while IFS= read -r src_file; do
+        local rel_path="${src_file#$SRC/}"
+        local dest_file="$DEST/$rel_path"
+
+        mkdir -p "$(dirname "$dest_file")"
+
+        if [ ! -f "$dest_file" ]; then
+            cp "$src_file" "$dest_file"
+            echo -e "  ${GREEN}+${NC} .cursor/$rel_path ${DIM}(new)${NC}"
+            added_count=$((added_count + 1))
+        elif ! cmp -s "$src_file" "$dest_file"; then
+            cp "$src_file" "$dest_file"
+            echo -e "  ${YELLOW}↻${NC} .cursor/$rel_path ${DIM}(updated)${NC}"
+            updated_count=$((updated_count + 1))
+        else
+            unchanged_count=$((unchanged_count + 1))
+        fi
+    done < <(find "$SRC" -type f -not -name '.DS_Store')
+
+    echo ""
+    if [ $added_count -gt 0 ] || [ $updated_count -gt 0 ]; then
+        print_success ".cursor/ synced: $added_count added, $updated_count updated, $unchanged_count unchanged"
+    else
+        print_success "All rules/skills/agents up to date ($unchanged_count files)"
     fi
 }
 
@@ -572,6 +608,7 @@ main() {
         *)
             migrate_data
             cleanup_stale
+            sync_cursor_dir
             sync_assets
             init_data_files
             fix_workspace_files
