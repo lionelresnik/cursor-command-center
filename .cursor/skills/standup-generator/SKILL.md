@@ -150,6 +150,7 @@ If you don't have enough context about what the issue was, read the task file to
 
 - **Cross-workspace always:** Never limit standup to just the current workspace — always scan all
 - **Human-readable descriptions:** Always explain what the issue was + what was done, never just ticket IDs
+- **Done items appear once:** When building the "Done" section, check the previous standup. If an item already appeared in a previous standup's "Done" section, **do not include it again**. Only show newly completed items — things that transitioned to done since the last standup. This prevents yesterday's completions from cluttering today's standup.
 - **Carryover detection:** If an item was "In Progress" yesterday and still is, note it
 - **Stale item alerts:** In progress for 3+ days → flag in Notes
 - **Empty standup:** No activity found → "Quiet day yesterday" — don't fabricate items
