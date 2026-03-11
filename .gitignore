@@ -46,3 +46,5 @@ contexts/*.repos
 !task-history/.gitkeep
 !docs/.gitkeep
 
+.cursor/cc-context.json
+.cursor/cc-last-pr.txt

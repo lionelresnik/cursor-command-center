@@ -17,7 +17,7 @@ When user asks to check repo status:
    - Check `.cursor/cc-context.json` for `"workspace"` field
    - Check the open `.code-workspace` filename (e.g., `backend.code-workspace` → workspace is `backend`)
    - Ask the user
-2. Read repo paths from `contexts/[workspace].repos`
+2. Read repo paths from `~/.command-center/contexts/[workspace].repos`
 3. For each repo, run:
 
 ```bash
@@ -30,11 +30,15 @@ branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 # Check for uncommitted changes
 changes=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
 
-# Check commits behind
-behind=$(git rev-list --count HEAD..origin/$branch 2>/dev/null || echo 0)
-
-# Check commits ahead
-ahead=$(git rev-list --count origin/$branch..HEAD 2>/dev/null || echo 0)
+# Check if upstream exists before comparing
+if git rev-parse --verify "origin/$branch" >/dev/null 2>&1; then
+    behind=$(git rev-list --count HEAD..origin/$branch 2>/dev/null || echo 0)
+    ahead=$(git rev-list --count origin/$branch..HEAD 2>/dev/null || echo 0)
+else
+    behind=0
+    ahead=0
+    # Branch has no upstream — mark as local-only
+fi
 ```
 
 4. Display results grouped by workspace:
@@ -71,3 +75,4 @@ fi
 | uncommitted | Has local changes — skip pull |
 | ahead | Has unpushed commits |
 | diverged | Both ahead and behind — needs manual resolution |
+| local-only | Branch has no upstream tracking — cannot compare |

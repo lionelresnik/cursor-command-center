@@ -9,19 +9,18 @@ description: Export and import Command Center configurations for backup or shari
 
 When user asks to export or back up their setup:
 
-1. Read all workspace definitions from `contexts/*.repos`
-2. Read `config.json` for settings
-3. Read `profile.json` (name and preferences)
-4. Read `todos.md` and `todos-archive.md` if they exist
-5. Read `standups/` directory if it exists
-6. Ask if they want to include knowledge base (task-history + docs + standups)
+1. Read all workspace definitions from `~/.command-center/contexts/*.repos`
+2. Read `~/.command-center/profile.json` for name, preferences, and settings
+3. Read `~/.command-center/todos.md` and `~/.command-center/todos-archive.md` if they exist
+4. Read `~/.command-center/standups/` directory if it exists
+5. Ask if they want to include knowledge base (task-history + docs + standups)
 7. Bundle into a JSON file:
 
 ```json
 {
   "version": "2.0",
   "exported": "2026-02-18T10:30:00Z",
-  "config": { ... },
+  "profile": { "name": "...", "preferences": { "workWeek": "..." } },
   "workspaces": {
     "backend": {
       "repos": [
@@ -31,7 +30,6 @@ When user asks to export or back up their setup:
       "dirs": ["/Users/me/Projects"]
     }
   },
-  "profile": { "name": "...", "preferences": {} },
   "todos": "... (raw markdown content of todos.md) ...",
   "todos_archive": "... (raw markdown of todos-archive.md if exists) ...",
   "task_history": { ... },
@@ -53,13 +51,12 @@ When user provides an export file or asks to import/restore:
    - Detect old base path from repo paths
    - Ask: "Your repos are at a different path. Where are your projects?"
    - Replace old base path with new one in all repo paths
-4. Write workspace definitions to `contexts/*.repos`
-5. Write `config.json`
-6. Restore `profile.json` (ask first: "Found a profile for [name] — restore it?")
-7. Restore `todos.md` (ask first: "Found [N] todos — restore them?")
-8. Optionally restore task-history, docs, and standups
-9. Regenerate .code-workspace files
-10. Confirm what was imported
+4. Write workspace definitions to `~/.command-center/contexts/*.repos`
+5. Restore `~/.command-center/profile.json` (ask first: "Found a profile for [name] — restore it?")
+6. Restore `~/.command-center/todos.md` (ask first: "Found [N] todos — restore them?")
+7. Optionally restore task-history, docs, and standups to `~/.command-center/`
+8. Regenerate .code-workspace files in `~/.command-center/workspaces/`
+9. Confirm what was imported
 
 ## Path Remapping Example
 

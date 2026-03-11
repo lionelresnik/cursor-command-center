@@ -1,92 +1,45 @@
 ---
-description: "Proactively detect work completion and update task files automatically. Monitors significant code changes, file edits, and commits to keep task history current."
+description: "Proactively detect work completion and update task files automatically. Monitors code changes, commits, and user signals to keep task history current."
 alwaysApply: true
 ---
 
 # Proactive Task Updates
 
+**All data lives under `~/.command-center/`.** Task files, todos, standups, and docs are NEVER created relative to the workspace root.
+
 ## When to Update Task Files
 
-Monitor for these signals that work has been completed:
+### After Git Commits
+When you see a git commit:
+- Parse the commit message for task/ticket references
+- Offer to update the task file: "I see you committed '[message]'. Want me to add this to the task file?"
 
-### 1. After Significant Code Changes
-When the user has made substantial edits (not just minor tweaks):
-- Multiple files modified
-- New functions/classes added
-- Bug fixes implemented
-- Features completed
-
-**Action:** Offer to update the relevant task file:
-> "I noticed you just [what they did]. Should I update the task file to reflect this progress?"
-
-### 2. After Git Commits
-When you see a git commit command executed:
-- Parse the commit message
-- Identify which task/ticket it relates to
-- Offer to update the task file with the commit details
-
-**Action:**
-> "I see you committed '[commit message]'. Want me to add this to the task file?"
-
-### 3. After PR Creation
+### After PR Creation
 When `gh pr create` is executed:
-- Capture the PR URL and title
-- Update the task file automatically (this is already handled by pr-linking.mdc)
+- Capture the PR URL and title (handled by `pr-linking.mdc`)
+- Update the task file automatically
 
-### 4. After PR Merged
-When a PR is merged — either the agent ran `gh pr merge` successfully, or the user says things like:
-- "I merged it", "merged the PR", "it's merged", "just merged"
+### After PR Merged
+When a PR is merged — either via `gh pr merge` or the user says "merged", "it's merged":
 
-**Action:**
-1. Run `git status` on the relevant repo to check for uncommitted changes
+1. Run `git status` to check for uncommitted changes
 2. Detect the default branch: `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'`
 
-**If working tree is clean:**
-> "PR merged! Want me to switch to `[main/master]` and pull the latest?"
+**If clean:** Offer to switch to main/master and pull.
+**If uncommitted changes:** List them and offer: stash+switch, discard+switch, or stay.
 
-If yes → run `git checkout [branch] && git pull origin [branch]`
+### When User Says They're Done
+"I'm done with [task]", "Finished [X]", "Fixed [bug]":
+- Immediately update the task file and mark items complete
 
-**If there are uncommitted changes**, list them and ask:
-> "There are uncommitted changes in this repo:
-> - `file1.go` (modified)
-> - `file2.go` (modified)
->
-> What do you want to do?
-> a) Stash them, switch to `[main/master]`, then restore
-> b) Discard them and switch to `[main/master]`
-> c) Keep working on this branch for now"
+### After Completing Todos
+When a todo is marked done and has a ticket tag (`#PROJ-123`):
+- Update the corresponding task file in `~/.command-center/task-history/[workspace]/`
+- If all todos for a ticket are done, suggest marking the task complete
 
-Then act based on the user's choice:
-- **a)** `git stash && git checkout [branch] && git pull origin [branch] && git stash pop`
-- **b)** `git checkout -- . && git checkout [branch] && git pull origin [branch]`
-- **c)** Do nothing
-
-### 5. When User Says They're Done
-When the user says things like:
-- "I'm done with [task]"
-- "Finished [subtask]"
-- "Completed [feature]"
-- "Fixed [bug]"
-
-**Action:** Immediately update the task file and mark items as complete.
-
-### 6. After Completing Todos
-When a todo is marked as done (moved to Done section):
-- Check if the todo has a ticket tag (e.g., `#PROJ-123`)
-- If yes, update the corresponding task file with the completed work
-- Add to the progress checklist or key decisions section
-
-**Action:**
-> "Marked todo as done. Updated task file [filename] to reflect this progress."
-
-### 7. After Plan Mode Sessions
-When exiting Plan mode or completing a planning session:
-- Detect if a plan was created or decisions were made
-- Check if there's a related task file
-- Offer to add the plan/decisions to the task file
-
-**Action:**
-> "I see we just finished planning [what]. Should I add these decisions to the task file?"
+### After Plan Mode Sessions
+When exiting Plan mode:
+- Offer to add decisions/plan to the relevant task file
 
 ## Confirm Before Writing
 
@@ -98,103 +51,29 @@ When exiting Plan mode or completing a planning session:
 
 Just create them and tell the user: "Created `[filename]` — [one line what's in it]."
 
-**Updating existing files = confirm first.** Before modifying a file that already exists:
-
+**Updating existing files = confirm first:**
 > "I'm about to update `[filename]` — [one line describing what will change]. OK?"
 
-Examples:
-> "I'm about to update `task-history/backend/PROJ-123-auth-retry-fix.md` — marking the retry logic implementation as complete. OK?"
-
-> "I'm about to update `todos.md` — marking auth retry logic as done. OK?"
-
-**Only wait for confirmation when updating an existing file.** If user says no → adjust and ask again.
-
-This keeps the Cursor review queue empty and keeps you in control without needing to manually accept files after the fact.
+Only wait for confirmation when updating an existing file.
 
 ## How to Update Task Files
 
-### Step 1: Identify the Task File
-1. Check if there's an open task file in the current workspace
-2. Look for task files with `status: in-progress` in `~/.command-center/task-history/[workspace]/`
-3. If multiple in-progress tasks, ask which one to update
-4. If no task file exists, ask if they want to create one
+1. **Find the task file:** Check `~/.command-center/task-history/[workspace]/` for files with `status: in-progress`
+2. **Determine what changed:** Summarize work completed, files changed, decisions made
+3. **Update the right section:** Progress checklist, Key Decisions, Files Changed, Status, Updated date
+4. **Tell the user:** "Updated task file: [filename] — marked [what] as complete"
 
-### Step 2: Determine What Changed
-Summarize the work completed:
-- What was done (feature added, bug fixed, refactor completed)
-- Which files were changed
-- Any key decisions made
-- Any blockers encountered
+## Detection Confidence
 
-### Step 3: Update the Task File
-Add to the appropriate section:
-- **Progress checklist:** Mark items as done (✅)
-- **Key Decisions:** Add new decision callouts if needed
-- **Files Changed:** Update the collapsible files section
-- **Status:** Update frontmatter status if task is complete
-- **Updated date:** Update the `**Updated:**` date in the header
+| Confidence | Signal | Action |
+|-----------|--------|--------|
+| **High** | Git commit with ticket reference, user says "done", PR created | Auto-update (with confirm for existing files) |
+| **Medium** | Multiple files modified, new functions added | Ask first |
+| **Low** | Minor edits, typos, formatting | Don't interrupt |
 
-### Step 4: Confirm
-Tell the user:
-> "Updated task file: [filename] — marked [what was done] as complete"
+## Integration
 
-## Detection Heuristics
-
-### High Confidence (Auto-update)
-- Git commit with clear task reference in message
-- PR created (already handled)
-- User explicitly says "done" or "finished"
-
-### Medium Confidence (Ask first)
-- 5+ files modified in a session
-- New functions/classes added
-- Significant refactoring detected
-
-### Low Confidence (Don't interrupt)
-- Minor edits (typos, formatting)
-- Single file tweaks
-- Exploratory changes
-
-## Integration with Standup and Todos
-
-When updating task files, also consider:
-- If it's the first update of the day, this will appear in tomorrow's standup
-- Group related updates together (don't create multiple entries for the same task)
-- Use clear, concise descriptions for standup readability
-
-**Todo Integration:**
-- When a todo with a ticket tag is completed, automatically update the task file
-- Check if all todos for a ticket are done → suggest marking task as complete
-- Link between todo completion and task file progress
-
-**Plan Mode Integration:**
-- After plan mode, capture key decisions and add to task file
-- Update the "Key Decisions" section with planning outcomes
-- Add any new subtasks to the progress checklist
-
-## Special Cases
-
-### No Task File Exists
-If significant work is detected but no task file exists:
-> "I noticed you've been working on [what]. Want me to create a task file to track this?"
-
-### Multiple Tasks in Progress
-If multiple task files are `in-progress`, ask which one the work relates to:
-> "Which task is this for? (1) [task A], (2) [task B], or (3) new task?"
-
-### Work Spans Multiple Tasks
-If work relates to multiple tasks, update all relevant task files.
-
-## Proactive Timing
-
-**Check for updates:**
-- After every 10-15 minutes of active coding
-- After git commits
-- When user pauses (no activity for 2+ minutes)
-- At end of conversation (before goodbye)
-
-**Don't interrupt:**
-- During active typing
-- In the middle of debugging
-- When user is asking questions
-- During error investigation
+- Task updates appear in the next standup via `~/.command-center/task-history/`
+- Group related updates — don't create multiple entries for the same task
+- When a todo with a ticket tag is completed, update both `~/.command-center/todos.md` and the task file
+- After plan mode, capture key decisions in the task file's "Key Decisions" section

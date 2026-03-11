@@ -5,12 +5,17 @@ alwaysApply: true
 
 # Task Tracking
 
-## Step 1: Ask for Ticket (Optional)
+## Step 1: Detect Ticket Automatically
 
-Before work that creates or modifies files, ask:
-> "Is there a Jira ticket for this? (e.g., ABC-1234, or press Enter to skip)"
+**Do NOT ask the user for a ticket upfront.** Instead, detect it automatically from context:
 
-If the user skips, create the task file without a ticket prefix (e.g., `fix-login-bug.md`).
+1. Check the current git branch name for ticket patterns (e.g., `feature/ABC-1234-description` → ticket is `ABC-1234`)
+2. Check if the user mentioned a ticket in their message (e.g., "working on PROJ-567")
+3. Check existing task files in `~/.command-center/task-history/[workspace]/` for an in-progress task with a ticket
+4. Check `~/.command-center/todos.md` for in-progress items with ticket tags
+
+If no ticket is found, create the task file without a ticket prefix. That's fine.
+
 If a ticket is discovered later:
 1. Add the ticket to the task file frontmatter
 2. Rename the file to include the ticket prefix (e.g., `fix-login-bug.md` → `ABC-1234-fix-login-bug.md`)

@@ -1,46 +1,58 @@
 ---
-description: "Time-aware greetings and work recaps when returning after idle. Reads session state to provide context on what was done and what's next."
+description: "Time-aware greetings and work recaps when returning after idle. Reads cc-context.json (written by session-start hook) to provide context on what was done and what's next."
 alwaysApply: true
 ---
 
 ## Session Greeting
 
-On session start, check `~/.command-center/session-state.json` for `lastSessionEnd`.
+**On every session start**, read `.cursor/cc-context.json` — this file is written by the `sessionStart` hook and contains pre-computed values: `idleHours`, `timeOfDay`, `userName`, `isNewDay`, `isStartOfWeek`, `todosPending`, `todosInProgress`, `workspace`.
 
-### Time-Aware Greeting
+**Do NOT read `~/.command-center/session-state.json` directly** — use `cc-context.json` instead. It already has the idle calculation done.
 
-Based on current time:
-- 5:00-11:59 → "Good morning, [name]"
-- 12:00-16:59 → "Good afternoon, [name]"
-- 17:00-20:59 → "Good evening, [name]"
-- 21:00-4:59 → "Hey [name], burning the midnight oil?"
+### Step 1: Read Context
 
-### Recap After Idle
+```
+Read .cursor/cc-context.json
+```
 
-If more than **4 hours** since last session:
+Extract: `userName`, `idleHours`, `timeOfDay`, `isNewDay`, `isStartOfWeek`, `todosPending`, `todosInProgress`, `workspace`.
 
-1. Read `~/.command-center/session-state.json` for last workspace and recent activity
-2. Read `~/.command-center/todos.md` for pending items
-3. Read recent files in `task-history/` for context
+### Step 2: Time-Aware Greeting
+
+Based on `timeOfDay` from cc-context.json:
+- `"morning"` → "Good morning, [userName]"
+- `"afternoon"` → "Good afternoon, [userName]"
+- `"evening"` → "Good evening, [userName]"
+- `"night"` → "Hey [userName], burning the midnight oil?"
+
+If `userName` is empty, greet without name and trigger the personalization rule.
+
+### Step 3: Recap After Idle (idleHours >= 4)
+
+If `idleHours` >= 4:
+
+1. Read `~/.command-center/todos.md` for pending/in-progress items
+2. Read recent files in `~/.command-center/task-history/` for context on what was worked on
+3. Read `~/.command-center/docs/` if helpful for context
 
 Provide a brief recap:
 ```
 Good morning, [name]. Here's where you left off:
 
 **Last session:** [workspace name], worked on [task summary]
-**Open todos:** [count] pending, [count] in progress
+**Open todos:** [todosInProgress] in progress, [todosPending] pending
 **Next up:** [highest priority pending todo]
 
 Want to continue where you left off, or start something new?
 ```
 
-### Short Absence (< 4 hours)
+### Step 4: Short Absence (idleHours < 4)
 
 Just greet briefly: "Welcome back, [name]." — no recap unless asked.
 
-### Standup Prompt
+### Step 5: Standup Prompt
 
-After the greeting (whether long recap or short), check `isNewDay` and `isStartOfWeek` from `.cursor/cc-context.json`:
+After the greeting (whether long recap or short), check `isNewDay` and `isStartOfWeek` from cc-context.json:
 
 - **New day (`isNewDay: true`):** After the greeting, ask: "Want me to generate today's standup?"
 - **Start of work week (`isStartOfWeek: true`):** Ask instead: "Start of the week — want a weekly recap of last week?"
@@ -52,3 +64,11 @@ After the greeting (whether long recap or short), check `isNewDay` and `isStartO
 If the user says goodbye, goodnight, or ends a long session:
 - "Good night, [name]. I've saved your progress."
 - Remind of any in-progress items: "You still have [X] in progress — I'll remind you next time."
+
+### Fallback
+
+If `.cursor/cc-context.json` does not exist or cannot be read (hook didn't fire), fall back to:
+1. Read `~/.command-center/session-state.json` for `lastSessionStart` or `lastSessionEnd`
+2. Read `~/.command-center/profile.json` for name
+3. Calculate idle time manually from the timestamp
+4. Proceed with the greeting as above

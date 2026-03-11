@@ -35,14 +35,14 @@ Trigger when the agent:
 - PR was opened for new functionality
 
 **After the work is done**, automatically document it:
-> "Adding [feature] to `docs/[workspace]/[relevant-doc].md`."
+> "Adding [feature] to `~/.command-center/docs/[workspace]/[relevant-doc].md`."
 
 ### 4. Discovered undocumented behavior during a task
 - While working on Task A, agent discovers behavior, config, or API not mentioned in docs
 - Finding is general knowledge — useful beyond the current task
 
 **Inline, immediately:**
-> "Worth noting: [finding] — adding to `docs/[workspace]/[doc].md`."
+> "Worth noting: [finding] — adding to `~/.command-center/docs/[workspace]/[doc].md`."
 
 ---
 
@@ -166,5 +166,5 @@ When a finding relates to an active task:
 - Link to the doc where the full finding was saved
 
 ```markdown
-> **Key Finding:** Discovered [topic] — see `docs/[workspace]/[doc].md#section`
+> **Key Finding:** Discovered [topic] — see `~/.command-center/docs/[workspace]/[doc].md#section`
 ```

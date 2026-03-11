@@ -26,7 +26,7 @@ https://github.com/user-attachments/assets/b2a4e825-a402-43ba-aec9-27f6661588db
 | 📁 **Project Groups** | Organize repos into contexts (Backend, Frontend, etc.) |
 | 🔄 **Deep Scanning** | Finds nested repos (5 levels deep) |
 | 📊 **Repo Status** | See git status across all repos at a glance |
-| 📝 **Knowledge Base** | Task history + docs organized by workspace — auto-updated as you work |
+| 📝 **Knowledge Base** | Task history + docs at `~/.command-center/` — auto-updated as you work |
 | 🔗 **PR Auto-Linking** | PRs automatically linked to task files |
 | 🗺️ **Dependency Graph** | Visualize service architecture (no tokens!) |
 | 🚀 **Quick Re-open** | Jump back to your last workspace instantly |
@@ -337,7 +337,7 @@ Generates a visual service dependency graph by parsing:
 - `serverless.yml` / `template.yaml` - Lambda, SQS, SNS, DynamoDB
 - `go.mod` / `package.json` - Go and Node.js services
 
-**Output:** `docs/[workspace]/architecture.html` (interactive) + `.md` (Mermaid)
+**Output:** `~/.command-center/docs/[workspace]/architecture.html` (interactive) + `.md` (Mermaid)
 
 **Example output:**
 ```
@@ -427,7 +427,7 @@ cursor-command-center/
 ├── open.sh           # Workspace launcher
 ├── status.sh         # Git status checker
 ├── manage.sh         # Add/remove repos, export/import
-├── graph.sh          # Service dependency graph generator
+├── graph.sh          # Service dependency graph (legacy — @lu now generates natively)
 ├── todo.sh           # Persistent todo manager
 ├── standup.sh        # Daily/weekly standup generator
 ├── help.sh           # Central help command
@@ -533,7 +533,7 @@ This repo is designed to be shared:
 
 | Share ✅ | Local Only ❌ |
 |----------|---------------|
-| Scripts (*.sh) | `config.json` |
+| Scripts (*.sh) | `profile.json` |
 | AI rules | `workspaces/` |
 | README files | `contexts/*.repos` |
 | | `task-history/**/*.md` |

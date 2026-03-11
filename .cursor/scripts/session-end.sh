@@ -30,4 +30,6 @@ cat > "$STATE_FILE" << EOF
 EOF
 
 # Clean up temp files
-[ -f "$PR_DETECT_FILE" ] && rm -f "$PR_DETECT_FILE"
+if [ -f "$PR_DETECT_FILE" ]; then
+    rm -f "$PR_DETECT_FILE"
+fi

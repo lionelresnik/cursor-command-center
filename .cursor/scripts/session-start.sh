@@ -69,17 +69,31 @@ if [ -f "$TODOS_FILE" ]; then
     done < "$TODOS_FILE"
 fi
 
-# Detect workspace
+# Detect workspace — match current directory against repo lists
 workspace=""
 last_workspace=""
 if [ -f "$STATE_FILE" ]; then
     last_workspace=$(grep -o '"lastWorkspace"[[:space:]]*:[[:space:]]*"[^"]*"' "$STATE_FILE" 2>/dev/null | head -1 | sed 's/.*"\([^"]*\)".*/\1/' || echo "")
 fi
-if [ -d "$CC_DIR/workspaces" ]; then
-    for ws_file in "$CC_DIR/workspaces"/*.code-workspace; do
-        [ -f "$ws_file" ] || continue
-        workspace=$(basename "$ws_file" .code-workspace)
+current_dir="$(pwd)"
+ws_count=0
+single_ws=""
+if [ -d "$CC_DIR/contexts" ]; then
+    for repos_file in "$CC_DIR/contexts"/*.repos; do
+        [ -f "$repos_file" ] || continue
+        ws_name=$(basename "$repos_file" .repos)
+        ws_count=$((ws_count + 1))
+        single_ws="$ws_name"
+        # Check if current directory matches any repo path in this workspace
+        if grep -q "|${current_dir}" "$repos_file" 2>/dev/null || grep -q "|${current_dir}/" "$repos_file" 2>/dev/null; then
+            workspace="$ws_name"
+            break
+        fi
     done
+fi
+# If only one workspace exists, use it regardless
+if [ -z "$workspace" ] && [ "$ws_count" -eq 1 ]; then
+    workspace="$single_ws"
 fi
 [ -z "$workspace" ] && workspace="$last_workspace"
 
