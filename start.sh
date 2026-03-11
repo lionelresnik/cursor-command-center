@@ -8,11 +8,11 @@
 # Run this after completing setup.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACES_DIR="$SCRIPT_DIR/workspaces"
+DATA_DIR="$HOME/.command-center"
+WORKSPACES_DIR="$DATA_DIR/workspaces"
 
-# Check if setup has been run
-if [ ! -f "$SCRIPT_DIR/config.json" ]; then
-    echo "⚠️  Setup not complete. Run ./setup.sh first."
+if [ ! -f "$DATA_DIR/config.json" ]; then
+    echo "Setup not complete. Run ./cc setup or ./sync.sh first."
     exit 1
 fi
 

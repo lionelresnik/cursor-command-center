@@ -51,16 +51,16 @@ case "${1:-help}" in
         "$SCRIPT_DIR/start.sh" "$@"
         ;;
     graph|g)
-        shift
-        "$SCRIPT_DIR/graph.sh" "$@"
+        echo "Graph generation is now handled by the @lu agent skill."
+        echo "Open a workspace in Cursor and type: @lu generate architecture graph"
         ;;
     todo|t)
-        shift
-        "$SCRIPT_DIR/todo.sh" "$@"
+        echo "Todo management is now handled by the @lu agent skill."
+        echo "Open a workspace in Cursor and type: @lu show my todos"
         ;;
     standup)
-        shift
-        "$SCRIPT_DIR/standup.sh" "$@"
+        echo "Standup generation is now handled by the @lu agent skill."
+        echo "Open a workspace in Cursor and type: @lu standup"
         ;;
     sync)
         shift

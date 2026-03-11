@@ -13,9 +13,10 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="$SCRIPT_DIR/config.json"
-CONTEXTS_DIR="$SCRIPT_DIR/contexts"
-WORKSPACES_DIR="$SCRIPT_DIR/workspaces"
+DATA_DIR="$HOME/.command-center"
+CONFIG_FILE="$DATA_DIR/config.json"
+CONTEXTS_DIR="$DATA_DIR/contexts"
+WORKSPACES_DIR="$DATA_DIR/workspaces"
 
 # Colors
 RED='\033[0;31m'
@@ -241,7 +242,7 @@ add_repos() {
     echo -e "${CYAN}Current repos in ${BOLD}$project${NC}${CYAN}: ${#existing_repos[@]}${NC}"
 
     # 3. Directory browser (same UX as setup.sh)
-    local last_dir_file="$SCRIPT_DIR/.last-browse-dir"
+    local last_dir_file="$DATA_DIR/.last-browse-dir"
     local current_dir="${HOME}"
     if [ -f "$last_dir_file" ] && [ -d "$(cat "$last_dir_file")" ]; then
         current_dir="$(cat "$last_dir_file")"
@@ -812,15 +813,15 @@ rename_workspace() {
     fi
     
     # Rename task-history folder if exists
-    if [ -d "$SCRIPT_DIR/task-history/${old_name}" ]; then
-        mv "$SCRIPT_DIR/task-history/${old_name}" "$SCRIPT_DIR/task-history/${new_name}"
+    if [ -d "$DATA_DIR/task-history/${old_name}" ]; then
+        mv "$DATA_DIR/task-history/${old_name}" "$DATA_DIR/task-history/${new_name}"
         echo -e "  ${GREEN}✓${NC} task-history/${old_name}/ → ${new_name}/"
         ((renamed++))
     fi
     
     # Rename docs folder if exists
-    if [ -d "$SCRIPT_DIR/docs/${old_name}" ]; then
-        mv "$SCRIPT_DIR/docs/${old_name}" "$SCRIPT_DIR/docs/${new_name}"
+    if [ -d "$DATA_DIR/docs/${old_name}" ]; then
+        mv "$DATA_DIR/docs/${old_name}" "$DATA_DIR/docs/${new_name}"
         echo -e "  ${GREEN}✓${NC} docs/${old_name}/ → ${new_name}/"
         ((renamed++))
     fi
@@ -840,10 +841,10 @@ EOF
     fi
     
     # Update .last-workspace if it was pointing to old name
-    if [ -f "$SCRIPT_DIR/.last-workspace" ]; then
-        last=$(cat "$SCRIPT_DIR/.last-workspace")
+    if [ -f "$DATA_DIR/.last-workspace" ]; then
+        last=$(cat "$DATA_DIR/.last-workspace")
         if [ "$last" = "$old_name" ]; then
-            echo "$new_name" > "$SCRIPT_DIR/.last-workspace"
+            echo "$new_name" > "$DATA_DIR/.last-workspace"
             echo -e "  ${GREEN}✓${NC} Updated .last-workspace"
         fi
     fi
@@ -1011,14 +1012,14 @@ export_config() {
     fi
     
     # Copy todos
-    if [ -f "$SCRIPT_DIR/todos.md" ]; then
-        cp "$SCRIPT_DIR/todos.md" "$export_dir/"
+    if [ -f "$DATA_DIR/todos.md" ]; then
+        cp "$DATA_DIR/todos.md" "$export_dir/"
         echo -e "  ${GREEN}✓${NC} todos.md"
     fi
     
     # Copy standups
-    if [ -d "$SCRIPT_DIR/standups" ] && ls "$SCRIPT_DIR/standups"/*.md >/dev/null 2>&1; then
-        cp -r "$SCRIPT_DIR/standups" "$export_dir/"
+    if [ -d "$DATA_DIR/standups" ] && ls "$DATA_DIR/standups"/*.md >/dev/null 2>&1; then
+        cp -r "$DATA_DIR/standups" "$export_dir/"
         echo -e "  ${GREEN}✓${NC} standups/"
     fi
     
@@ -1029,7 +1030,7 @@ export_config() {
     if [[ "$include_knowledge" =~ ^[Yy] ]]; then
         # List available workspaces
         local workspaces=()
-        for dir in "$SCRIPT_DIR/task-history"/*/ "$SCRIPT_DIR/docs"/*/; do
+        for dir in "$DATA_DIR/task-history"/*/ "$DATA_DIR/docs"/*/; do
             if [ -d "$dir" ]; then
                 local ws=$(basename "$dir")
                 if [[ ! " ${workspaces[@]} " =~ " ${ws} " ]]; then
@@ -1050,43 +1051,43 @@ export_config() {
             
             if [ "$ws_choice" = "all" ] || [ -z "$ws_choice" ]; then
                 # Export all
-                if [ -d "$SCRIPT_DIR/task-history" ]; then
-                    cp -r "$SCRIPT_DIR/task-history" "$export_dir/"
+                if [ -d "$DATA_DIR/task-history" ]; then
+                    cp -r "$DATA_DIR/task-history" "$export_dir/"
                     echo -e "  ${GREEN}✓${NC} task-history/ (all workspaces)"
                 fi
-                if [ -d "$SCRIPT_DIR/docs" ]; then
-                    cp -r "$SCRIPT_DIR/docs" "$export_dir/"
+                if [ -d "$DATA_DIR/docs" ]; then
+                    cp -r "$DATA_DIR/docs" "$export_dir/"
                     echo -e "  ${GREEN}✓${NC} docs/ (all workspaces)"
                 fi
             else
                 # Export specific workspace
                 mkdir -p "$export_dir/task-history"
                 mkdir -p "$export_dir/docs"
-                if [ -d "$SCRIPT_DIR/task-history/$ws_choice" ]; then
-                    cp -r "$SCRIPT_DIR/task-history/$ws_choice" "$export_dir/task-history/"
+                if [ -d "$DATA_DIR/task-history/$ws_choice" ]; then
+                    cp -r "$DATA_DIR/task-history/$ws_choice" "$export_dir/task-history/"
                     echo -e "  ${GREEN}✓${NC} task-history/$ws_choice/"
                 fi
-                if [ -d "$SCRIPT_DIR/task-history/shared" ]; then
-                    cp -r "$SCRIPT_DIR/task-history/shared" "$export_dir/task-history/"
+                if [ -d "$DATA_DIR/task-history/shared" ]; then
+                    cp -r "$DATA_DIR/task-history/shared" "$export_dir/task-history/"
                     echo -e "  ${GREEN}✓${NC} task-history/shared/"
                 fi
-                if [ -d "$SCRIPT_DIR/docs/$ws_choice" ]; then
-                    cp -r "$SCRIPT_DIR/docs/$ws_choice" "$export_dir/docs/"
+                if [ -d "$DATA_DIR/docs/$ws_choice" ]; then
+                    cp -r "$DATA_DIR/docs/$ws_choice" "$export_dir/docs/"
                     echo -e "  ${GREEN}✓${NC} docs/$ws_choice/"
                 fi
-                if [ -d "$SCRIPT_DIR/docs/shared" ]; then
-                    cp -r "$SCRIPT_DIR/docs/shared" "$export_dir/docs/"
+                if [ -d "$DATA_DIR/docs/shared" ]; then
+                    cp -r "$DATA_DIR/docs/shared" "$export_dir/docs/"
                     echo -e "  ${GREEN}✓${NC} docs/shared/"
                 fi
             fi
         else
             # No workspace folders yet, copy entire folders
-            if [ -d "$SCRIPT_DIR/task-history" ]; then
-                cp -r "$SCRIPT_DIR/task-history" "$export_dir/"
+            if [ -d "$DATA_DIR/task-history" ]; then
+                cp -r "$DATA_DIR/task-history" "$export_dir/"
                 echo -e "  ${GREEN}✓${NC} task-history/"
             fi
-            if [ -d "$SCRIPT_DIR/docs" ]; then
-                cp -r "$SCRIPT_DIR/docs" "$export_dir/"
+            if [ -d "$DATA_DIR/docs" ]; then
+                cp -r "$DATA_DIR/docs" "$export_dir/"
                 echo -e "  ${GREEN}✓${NC} docs/"
             fi
         fi
@@ -1282,26 +1283,26 @@ EOF
     
     # Import todos
     if [ -f "$export_dir/todos.md" ]; then
-        if [ -f "$SCRIPT_DIR/todos.md" ]; then
+        if [ -f "$DATA_DIR/todos.md" ]; then
             echo ""
             echo -en "${YELLOW}?${NC} Existing todos.md found. Overwrite? [y/N]: "
             read -r overwrite_todos
             if [[ "$overwrite_todos" =~ ^[Yy] ]]; then
-                cp "$export_dir/todos.md" "$SCRIPT_DIR/todos.md"
+                cp "$export_dir/todos.md" "$DATA_DIR/todos.md"
                 echo -e "  ${GREEN}✓${NC} Imported todos.md"
             else
                 echo -e "  ${DIM}Skipped todos.md${NC}"
             fi
         else
-            cp "$export_dir/todos.md" "$SCRIPT_DIR/todos.md"
+            cp "$export_dir/todos.md" "$DATA_DIR/todos.md"
             echo -e "  ${GREEN}✓${NC} Imported todos.md"
         fi
     fi
     
     # Import standups
     if [ -d "$export_dir/standups" ]; then
-        mkdir -p "$SCRIPT_DIR/standups"
-        cp -r "$export_dir/standups"/* "$SCRIPT_DIR/standups/" 2>/dev/null
+        mkdir -p "$DATA_DIR/standups"
+        cp -r "$export_dir/standups"/* "$DATA_DIR/standups/" 2>/dev/null
         echo -e "  ${GREEN}✓${NC} Imported standups/"
     fi
     
@@ -1331,13 +1332,13 @@ EOF
         read -r import_knowledge
         if [[ "$import_knowledge" =~ ^[Yy] ]]; then
             if [ -d "$export_dir/task-history" ]; then
-                mkdir -p "$SCRIPT_DIR/task-history"
-                cp -r "$export_dir/task-history"/* "$SCRIPT_DIR/task-history/" 2>/dev/null
+                mkdir -p "$DATA_DIR/task-history"
+                cp -r "$export_dir/task-history"/* "$DATA_DIR/task-history/" 2>/dev/null
                 echo -e "  ${GREEN}✓${NC} Imported task-history/"
             fi
             if [ -d "$export_dir/docs" ]; then
-                mkdir -p "$SCRIPT_DIR/docs"
-                cp -r "$export_dir/docs"/* "$SCRIPT_DIR/docs/" 2>/dev/null
+                mkdir -p "$DATA_DIR/docs"
+                cp -r "$export_dir/docs"/* "$DATA_DIR/docs/" 2>/dev/null
                 echo -e "  ${GREEN}✓${NC} Imported docs/"
             fi
         fi

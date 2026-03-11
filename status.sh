@@ -5,8 +5,9 @@
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONTEXTS_DIR="$SCRIPT_DIR/contexts"
-CONFIG_FILE="$SCRIPT_DIR/config.json"
+DATA_DIR="$HOME/.command-center"
+CONTEXTS_DIR="$DATA_DIR/contexts"
+CONFIG_FILE="$DATA_DIR/config.json"
 
 # Colors
 RED='\033[0;31m'

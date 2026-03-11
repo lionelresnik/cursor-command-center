@@ -7,9 +7,10 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="$SCRIPT_DIR/config.json"
-CONTEXTS_DIR="$SCRIPT_DIR/contexts"
-WORKSPACES_DIR="$SCRIPT_DIR/workspaces"
+DATA_DIR="$HOME/.command-center"
+CONFIG_FILE="$DATA_DIR/config.json"
+CONTEXTS_DIR="$DATA_DIR/contexts"
+WORKSPACES_DIR="$DATA_DIR/workspaces"
 
 # Colors
 RED='\033[0;31m'
@@ -268,7 +269,7 @@ add_project_group() {
     local adding=true
     
     # Remember last browsed directory across sessions
-    local last_dir_file="$SCRIPT_DIR/.last-browse-dir"
+    local last_dir_file="$DATA_DIR/.last-browse-dir"
     local current_dir="${HOME}"
     if [ -f "$last_dir_file" ] && [ -d "$(cat "$last_dir_file")" ]; then
         current_dir="$(cat "$last_dir_file")"
@@ -708,21 +709,12 @@ show_completion() {
             [ "$ws_name" = "all" ] && continue
             [ "$ws_name" = "none" ] && continue
             
-            if [ -f "$CONTEXTS_DIR/${ws_name}.repos" ]; then
-                "$SCRIPT_DIR/graph.sh" "$ws_name" >/dev/null 2>&1 && \
-                    echo -e "  ${GREEN}✓${NC} Generated graph for ${BOLD}$ws_name${NC}" || \
-                    echo -e "  ${YELLOW}⚠${NC} Could not generate graph for $ws_name"
             fi
         fi
     done
     echo ""
     
-    # Ask if user wants to view a graph
-    echo -en "${MAGENTA}?${NC} View an architecture graph now? [y/N]: "
-    read -r view_graph
-    if [[ "$view_graph" =~ ^[Yy]$ ]]; then
-        "$SCRIPT_DIR/graph.sh" --open
-    fi
+    echo -e "${CYAN}ℹ${NC}  To generate architecture graphs, open a workspace and ask @lu"
     echo ""
     
     echo -e "${CYAN}Happy coding! 🚀${NC}\n"

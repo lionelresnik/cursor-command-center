@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║              🔄 Cursor Command Center Sync & Upgrade                      ║
+# ║              Cursor Command Center Sync & Upgrade                        ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 #
-# Syncs plugin components and upgrades existing Command Center installations
-# with new features without recreating workspaces.
+# Syncs plugin components, migrates data to ~/.command-center/, and cleans up
+# the CLI repo so all user data lives exclusively in ~/.command-center/.
 #
 # Usage:
-#   ./sync.sh              # Full sync (clean stale dirs + assets + data + workspace fixes)
+#   ./sync.sh              # Full sync (migrate + assets + data + workspaces + cleanup)
 #   ./sync.sh --plugin     # Developer only: sync from local plugin repo into CLI's .cursor/
-#   ./sync.sh --data       # Only initialize data files
+#   ./sync.sh --data       # Only initialize data files in ~/.command-center/
 #   ./sync.sh --workspaces # Only fix workspace files
 
 set -e
@@ -19,9 +19,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="$SCRIPT_DIR/../cursor-command-center-plugin"
 CURSOR_DIR="$SCRIPT_DIR/.cursor"
 ASSETS_DIR="$SCRIPT_DIR/assets"
-WORKSPACES_DIR="$SCRIPT_DIR/workspaces"
+DATA_DIR="$HOME/.command-center"
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -63,34 +62,117 @@ print_error() {
     echo -e "${RED}✗${NC}  $1"
 }
 
-cleanup_stale_cursor_dirs() {
-    print_step "Cleaning Up Stale Directories"
+migrate_data() {
+    print_step "Migrating Data to ~/.command-center/"
+
+    mkdir -p "$DATA_DIR/task-history" "$DATA_DIR/docs" "$DATA_DIR/contexts" \
+             "$DATA_DIR/standups" "$DATA_DIR/workspaces"
+
+    local migrated=0
+    local migrate_tmp
+    migrate_tmp=$(mktemp)
+    echo "0" > "$migrate_tmp"
+
+    migrate_tree() {
+        local src_base="$1"
+        local dest_base="$2"
+        local label="$3"
+
+        [ -d "$src_base" ] || return 0
+
+        while IFS= read -r src_file; do
+            local rel_path="${src_file#$src_base/}"
+
+            [ "$rel_path" = ".gitkeep" ] && continue
+            [ "$rel_path" = ".DS_Store" ] && continue
+
+            local dest_file="$dest_base/$rel_path"
+            mkdir -p "$(dirname "$dest_file")"
+
+            if [ ! -f "$dest_file" ]; then
+                cp "$src_file" "$dest_file"
+                echo -e "  ${GREEN}+${NC} $label/$rel_path ${DIM}(migrated)${NC}"
+                echo $(( $(cat "$migrate_tmp") + 1 )) > "$migrate_tmp"
+            elif ! cmp -s "$src_file" "$dest_file"; then
+                local src_mod dest_mod
+                if [[ "$OSTYPE" == "darwin"* ]]; then
+                    src_mod=$(stat -f %m "$src_file" 2>/dev/null || echo 0)
+                    dest_mod=$(stat -f %m "$dest_file" 2>/dev/null || echo 0)
+                else
+                    src_mod=$(stat -c %Y "$src_file" 2>/dev/null || echo 0)
+                    dest_mod=$(stat -c %Y "$dest_file" 2>/dev/null || echo 0)
+                fi
+                if [ "$src_mod" -gt "$dest_mod" ]; then
+                    cp "$src_file" "$dest_file"
+                    echo -e "  ${YELLOW}↻${NC} $label/$rel_path ${DIM}(newer in CLI repo, updated)${NC}"
+                    echo $(( $(cat "$migrate_tmp") + 1 )) > "$migrate_tmp"
+                else
+                    echo -e "  ${DIM}  $label/$rel_path (kept ~/.command-center/ version)${NC}"
+                fi
+            fi
+        done < <(find "$src_base" -type f \( -name "*.md" -o -name "*.repos" -o -name "*.dirs" -o -name "*.code-workspace" -o -name "*.json" -o -name "*.selection" \))
+    }
+
+    migrate_tree "$SCRIPT_DIR/task-history" "$DATA_DIR/task-history" "task-history"
+    migrate_tree "$SCRIPT_DIR/docs" "$DATA_DIR/docs" "docs"
+    migrate_tree "$SCRIPT_DIR/contexts" "$DATA_DIR/contexts" "contexts"
+    migrate_tree "$SCRIPT_DIR/standups" "$DATA_DIR/standups" "standups"
+    migrate_tree "$SCRIPT_DIR/workspaces" "$DATA_DIR/workspaces" "workspaces"
+
+    for rootfile in config.json profile.json session-state.json todos.md; do
+        if [ -f "$SCRIPT_DIR/$rootfile" ] && [ ! -f "$DATA_DIR/$rootfile" ]; then
+            local content_check
+            content_check=$(grep -v '^\s*$' "$SCRIPT_DIR/$rootfile" 2>/dev/null | grep -v '""' | wc -l)
+            if [ "$content_check" -gt 2 ]; then
+                cp "$SCRIPT_DIR/$rootfile" "$DATA_DIR/$rootfile"
+                echo -e "  ${GREEN}+${NC} $rootfile ${DIM}(migrated)${NC}"
+                echo $(( $(cat "$migrate_tmp") + 1 )) > "$migrate_tmp"
+            fi
+        fi
+    done
+
+    migrated=$(cat "$migrate_tmp")
+    rm -f "$migrate_tmp"
+
+    if [ "$migrated" -eq 0 ]; then
+        print_info "No data to migrate (already in ~/.command-center/)"
+    else
+        print_success "Migrated $migrated file(s) to ~/.command-center/"
+    fi
+}
+
+cleanup_stale() {
+    print_step "Cleaning Up Stale Files"
 
     local cleaned=0
 
-    # Remove stale ~/.command-center/.cursor/ — rules/skills live in the repo, not here
-    if [ -d "$HOME/.command-center/.cursor" ]; then
-        rm -rf "$HOME/.command-center/.cursor"
+    if [ -d "$DATA_DIR/.cursor" ]; then
+        rm -rf "$DATA_DIR/.cursor"
         print_success "Removed stale ~/.command-center/.cursor/"
-        cleaned=1
+        cleaned=$((cleaned + 1))
     fi
 
-    # Remove stale ~/.command-center/workspaces/.cursor/ — old duplicate
-    if [ -d "$HOME/.command-center/workspaces/.cursor" ]; then
-        rm -rf "$HOME/.command-center/workspaces/.cursor"
+    if [ -d "$DATA_DIR/workspaces/.cursor" ]; then
+        rm -rf "$DATA_DIR/workspaces/.cursor"
         print_success "Removed stale ~/.command-center/workspaces/.cursor/"
-        cleaned=1
+        cleaned=$((cleaned + 1))
+    fi
+
+    if [ -f "$DATA_DIR/easter-egg-art.md" ]; then
+        rm -f "$DATA_DIR/easter-egg-art.md"
+        print_success "Removed stale ~/. command-center/easter-egg-art.md (lives in assets/)"
+        cleaned=$((cleaned + 1))
     fi
 
     if [ $cleaned -eq 0 ]; then
-        print_info "No stale directories found"
+        print_info "No stale files found"
     fi
 }
 
 sync_assets() {
     print_step "Syncing Assets"
 
-    local DEST_ASSETS="$HOME/.command-center/assets"
+    local DEST_ASSETS="$DATA_DIR/assets"
     mkdir -p "$DEST_ASSETS"
 
     local added_count=0
@@ -99,19 +181,20 @@ sync_assets() {
 
     for src_file in "$ASSETS_DIR"/*; do
         [ -f "$src_file" ] || continue
-        local filename=$(basename "$src_file")
+        local filename
+        filename=$(basename "$src_file")
         local dest_file="$DEST_ASSETS/$filename"
 
         if [ ! -f "$dest_file" ]; then
             cp "$src_file" "$dest_file"
             echo -e "  ${GREEN}+${NC} $filename ${DIM}(new)${NC}"
-            ((added_count++))
+            added_count=$((added_count + 1))
         elif ! cmp -s "$src_file" "$dest_file"; then
             cp "$src_file" "$dest_file"
             echo -e "  ${YELLOW}↻${NC} $filename ${DIM}(modified)${NC}"
-            ((updated_count++))
+            updated_count=$((updated_count + 1))
         else
-            ((unchanged_count++))
+            unchanged_count=$((unchanged_count + 1))
         fi
     done
 
@@ -146,55 +229,58 @@ sync_from_plugin() {
 
         for src_file in "$src_dir"/$pattern; do
             [ -e "$src_file" ] || continue
-            local filename=$(basename "$src_file")
+            local filename
+            filename=$(basename "$src_file")
             local dest_file="$dest_dir/$filename"
 
             if [ ! -f "$dest_file" ]; then
                 cp -r "$src_file" "$dest_file"
                 echo -e "  ${GREEN}+${NC} $filename ${DIM}(new)${NC}"
-                ((added_count++))
+                added_count=$((added_count + 1))
             elif ! cmp -s "$src_file" "$dest_file"; then
                 cp -r "$src_file" "$dest_file"
                 echo -e "  ${YELLOW}↻${NC} $filename ${DIM}(modified)${NC}"
-                ((updated_count++))
+                updated_count=$((updated_count + 1))
             else
-                ((unchanged_count++))
+                unchanged_count=$((unchanged_count + 1))
             fi
         done
     }
 
-    mkdir -p "$DEST_DIR/rules" "$DEST_DIR/skills" "$DEST_DIR/agents" "$DEST_DIR/hooks"
+    mkdir -p "$DEST_DIR/rules" "$DEST_DIR/skills" "$DEST_DIR/agents" "$DEST_DIR/hooks" "$DEST_DIR/scripts"
 
     [ -d "$PLUGIN_DIR/rules" ]   && sync_files "$PLUGIN_DIR/rules"   "$DEST_DIR/rules"   "*.mdc"
     [ -d "$PLUGIN_DIR/agents" ]  && sync_files "$PLUGIN_DIR/agents"  "$DEST_DIR/agents"  "*.md"
     [ -d "$PLUGIN_DIR/hooks" ]   && sync_files "$PLUGIN_DIR/hooks"   "$DEST_DIR/hooks"   "*"
+    [ -d "$PLUGIN_DIR/scripts" ] && sync_files "$PLUGIN_DIR/scripts" "$DEST_DIR/scripts" "*.sh"
     [ -d "$PLUGIN_DIR/assets" ]  && sync_files "$PLUGIN_DIR/assets"  "$ASSETS_DIR"       "*"
 
     if [ -d "$PLUGIN_DIR/skills" ]; then
         for skill_dir in "$PLUGIN_DIR/skills"/*; do
             [ -d "$skill_dir" ] || continue
-            local skill_name=$(basename "$skill_dir")
+            local skill_name
+            skill_name=$(basename "$skill_dir")
             mkdir -p "$DEST_DIR/skills/$skill_name"
             for skill_file in "$skill_dir"/*; do
                 [ -f "$skill_file" ] || continue
-                local filename=$(basename "$skill_file")
+                local filename
+                filename=$(basename "$skill_file")
                 local dest_file="$DEST_DIR/skills/$skill_name/$filename"
                 if [ ! -f "$dest_file" ]; then
                     cp "$skill_file" "$dest_file"
                     echo -e "  ${GREEN}+${NC} skills/$skill_name/$filename ${DIM}(new)${NC}"
-                    ((added_count++))
+                    added_count=$((added_count + 1))
                 elif ! cmp -s "$skill_file" "$dest_file"; then
                     cp "$skill_file" "$dest_file"
                     echo -e "  ${YELLOW}↻${NC} skills/$skill_name/$filename ${DIM}(modified)${NC}"
-                    ((updated_count++))
+                    updated_count=$((updated_count + 1))
                 else
-                    ((unchanged_count++))
+                    unchanged_count=$((unchanged_count + 1))
                 fi
             done
         done
     fi
 
-    # Fix easter-egg.mdc path for CLI usage
     if [ -f "$DEST_DIR/rules/easter-egg.mdc" ]; then
         if [[ "$OSTYPE" == "darwin"* ]]; then
             sed -i '' 's|assets/easter-egg-art.md|~/.command-center/assets/easter-egg-art.md|g' "$DEST_DIR/rules/easter-egg.mdc" 2>/dev/null || true
@@ -206,7 +292,7 @@ sync_from_plugin() {
     echo ""
     if [ $added_count -gt 0 ] || [ $updated_count -gt 0 ]; then
         print_success "Plugin sync complete: $added_count added, $updated_count updated, $unchanged_count unchanged"
-        print_info "Run ./sync.sh (no flags) to push these to ~/.command-center"
+        print_info "Run ./sync.sh (no flags) to push assets to ~/.command-center"
     else
         print_success "All plugin files already up to date ($unchanged_count files)"
     fi
@@ -214,13 +300,12 @@ sync_from_plugin() {
 
 init_data_files() {
     print_step "Initializing Data Files"
-    
-    # Create directories
-    mkdir -p "$SCRIPT_DIR/standups" "$SCRIPT_DIR/task-history" "$SCRIPT_DIR/docs"
-    
-    # Initialize profile.json if missing
-    if [ ! -f "$SCRIPT_DIR/profile.json" ]; then
-        cat > "$SCRIPT_DIR/profile.json" << 'EOF'
+
+    mkdir -p "$DATA_DIR/standups" "$DATA_DIR/task-history" "$DATA_DIR/docs" \
+             "$DATA_DIR/contexts" "$DATA_DIR/workspaces" "$DATA_DIR/assets"
+
+    if [ ! -f "$DATA_DIR/profile.json" ]; then
+        cat > "$DATA_DIR/profile.json" << 'TMPL'
 {
   "name": "",
   "createdAt": "",
@@ -228,28 +313,26 @@ init_data_files() {
     "workWeek": "mon-fri"
   }
 }
-EOF
+TMPL
         print_success "Created profile.json (personalization: name, work week)"
     else
         print_info "profile.json already exists"
     fi
-    
-    # Initialize session-state.json if missing
-    if [ ! -f "$SCRIPT_DIR/session-state.json" ]; then
-        cat > "$SCRIPT_DIR/session-state.json" << 'EOF'
+
+    if [ ! -f "$DATA_DIR/session-state.json" ]; then
+        cat > "$DATA_DIR/session-state.json" << 'TMPL'
 {
   "lastWorkspace": "",
   "lastSessionEnd": ""
 }
-EOF
+TMPL
         print_success "Created session-state.json (session tracking)"
     else
         print_info "session-state.json already exists"
     fi
-    
-    # Initialize todos.md if missing
-    if [ ! -f "$SCRIPT_DIR/todos.md" ]; then
-        cat > "$SCRIPT_DIR/todos.md" << 'EOF'
+
+    if [ ! -f "$DATA_DIR/todos.md" ]; then
+        cat > "$DATA_DIR/todos.md" << 'TMPL'
 # Todos
 
 ## In Progress
@@ -257,47 +340,146 @@ EOF
 ## Pending
 
 ## Done
-EOF
+TMPL
         print_success "Created todos.md (persistent todo list)"
     else
         print_info "todos.md already exists"
     fi
-    
-    print_success "Data files initialized"
+
+    print_success "Data files initialized in ~/.command-center/"
 }
 
 fix_workspace_files() {
     print_step "Fixing Workspace Files"
-    
-    if [ ! -d "$WORKSPACES_DIR" ]; then
-        print_warning "No workspaces directory found"
-        return
-    fi
-    
+
     local fixed=0
     local total=0
-    
-    for ws_file in "$WORKSPACES_DIR"/*.code-workspace; do
-        [ -e "$ws_file" ] || continue
-        total=$((total + 1))
-        
-        # Check if it has the tilde path issue
-        if grep -q '"path": "~/\.command-center"' "$ws_file" 2>/dev/null; then
-            # Fix it
-            if [[ "$OSTYPE" == "darwin"* ]]; then
-                sed -i '' 's|"path": "~/\.command-center"|"path": "'$SCRIPT_DIR'"|g' "$ws_file"
-            else
-                sed -i 's|"path": "~/\.command-center"|"path": "'$SCRIPT_DIR'"|g' "$ws_file"
+    local OLD_PROJECTS_DIR
+    OLD_PROJECTS_DIR="$(cd "$SCRIPT_DIR/.." 2>/dev/null && pwd)"
+
+    fix_ws_dir() {
+        local ws_dir="$1"
+        [ -d "$ws_dir" ] || return 0
+
+        for ws_file in "$ws_dir"/*.code-workspace; do
+            [ -e "$ws_file" ] || continue
+            total=$((total + 1))
+            local needs_fix=0
+
+            if grep -q '"path": "\.\.' "$ws_file" 2>/dev/null; then
+                needs_fix=1
             fi
-            fixed=$((fixed + 1))
-            print_success "Fixed $(basename "$ws_file")"
+            if grep -q "\"path\": \"$SCRIPT_DIR\"" "$ws_file" 2>/dev/null; then
+                needs_fix=1
+            fi
+            if grep -q '"path": "~/\.command-center"' "$ws_file" 2>/dev/null; then
+                needs_fix=1
+            fi
+
+            if [ $needs_fix -eq 1 ]; then
+                if [[ "$OSTYPE" == "darwin"* ]]; then
+                    sed -i '' 's|"path": "\.\."|"path": "'"$DATA_DIR"'"|g' "$ws_file"
+                    sed -i '' 's|"path": "'"$SCRIPT_DIR"'"|"path": "'"$DATA_DIR"'"|g' "$ws_file"
+                    sed -i '' 's|"path": "~/\.command-center"|"path": "'"$DATA_DIR"'"|g' "$ws_file"
+                    sed -i '' 's|"path": "\.\./\.\./|"path": "'"$OLD_PROJECTS_DIR"'/|g' "$ws_file"
+                else
+                    sed -i 's|"path": "\.\."|"path": "'"$DATA_DIR"'"|g' "$ws_file"
+                    sed -i 's|"path": "'"$SCRIPT_DIR"'"|"path": "'"$DATA_DIR"'"|g' "$ws_file"
+                    sed -i 's|"path": "~/\.command-center"|"path": "'"$DATA_DIR"'"|g' "$ws_file"
+                    sed -i 's|"path": "\.\./\.\./|"path": "'"$OLD_PROJECTS_DIR"'/|g' "$ws_file"
+                fi
+                fixed=$((fixed + 1))
+                print_success "Fixed $(basename "$ws_file")"
+            fi
+        done
+    }
+
+    fix_ws_dir "$DATA_DIR/workspaces"
+    fix_ws_dir "$SCRIPT_DIR/workspaces"
+
+    if [ $fixed -eq 0 ]; then
+        print_info "All workspace files up to date ($total checked)"
+    else
+        print_success "Fixed $fixed workspace file(s) to point to ~/.command-center/"
+    fi
+}
+
+cleanup_cli_data() {
+    print_step "Cleaning Up CLI Repo Data (moved to ~/.command-center/)"
+
+    local cleaned=0
+
+    remove_if_exists() {
+        local target="$1"
+        local label="$2"
+        if [ -e "$target" ]; then
+            rm -rf "$target"
+            print_success "Removed $label"
+            cleaned=$((cleaned + 1))
+        fi
+    }
+
+    for dir in task-history docs standups; do
+        if [ -d "$SCRIPT_DIR/$dir" ]; then
+            local has_files
+            has_files=$(find "$SCRIPT_DIR/$dir" -type f -not -name '.gitkeep' -not -name '.DS_Store' 2>/dev/null | head -1)
+            if [ -n "$has_files" ]; then
+                print_warning "$dir/ still has files — verifying migration before removing"
+                local safe_to_remove=1
+                while IFS= read -r f; do
+                    local rel="${f#$SCRIPT_DIR/$dir/}"
+                    if [ ! -f "$DATA_DIR/$dir/$rel" ]; then
+                        print_error "  MISSING in ~/.command-center/$dir/$rel — skipping cleanup of $dir/"
+                        safe_to_remove=0
+                        break
+                    fi
+                done < <(find "$SCRIPT_DIR/$dir" -type f \( -name "*.md" -o -name "*.json" \) -not -name '.gitkeep')
+                if [ $safe_to_remove -eq 1 ]; then
+                    rm -rf "$SCRIPT_DIR/$dir"
+                    print_success "Removed $dir/ from CLI repo"
+                    cleaned=$((cleaned + 1))
+                fi
+            else
+                rm -rf "$SCRIPT_DIR/$dir"
+                print_success "Removed empty $dir/ from CLI repo"
+                cleaned=$((cleaned + 1))
+            fi
         fi
     done
-    
-    if [ $fixed -eq 0 ]; then
-        print_info "All workspace files are up to date ($total checked)"
+
+    if [ -d "$SCRIPT_DIR/contexts" ]; then
+        find "$SCRIPT_DIR/contexts" -type f \( -name "*.repos" -o -name "*.dirs" -o -name "*.selection" \) -exec rm -f {} \;
+        rm -f "$SCRIPT_DIR/contexts/.gitkeep"
+        if [ -z "$(ls -A "$SCRIPT_DIR/contexts" 2>/dev/null)" ]; then
+            rmdir "$SCRIPT_DIR/contexts"
+        fi
+        print_success "Cleaned contexts/ in CLI repo"
+        cleaned=$((cleaned + 1))
+    fi
+
+    if [ -d "$SCRIPT_DIR/workspaces" ]; then
+        find "$SCRIPT_DIR/workspaces" -name "*.code-workspace" -exec rm -f {} \;
+        rm -f "$SCRIPT_DIR/workspaces/.gitkeep"
+        if [ -z "$(ls -A "$SCRIPT_DIR/workspaces" 2>/dev/null)" ]; then
+            rmdir "$SCRIPT_DIR/workspaces"
+        fi
+        print_success "Cleaned workspaces/ in CLI repo"
+        cleaned=$((cleaned + 1))
+    fi
+
+    for f in profile.json session-state.json todos.md config.json .last-workspace .last-browse-dir; do
+        remove_if_exists "$SCRIPT_DIR/$f" "$f from CLI repo"
+    done
+
+    for f in "$SCRIPT_DIR"/*.code-workspace; do
+        [ -e "$f" ] || continue
+        remove_if_exists "$f" "$(basename "$f") from CLI repo root"
+    done
+
+    if [ $cleaned -eq 0 ]; then
+        print_info "CLI repo already clean"
     else
-        print_success "Fixed $fixed workspace file(s)"
+        print_success "Cleaned $cleaned item(s) from CLI repo"
     fi
 }
 
@@ -307,7 +489,9 @@ show_completion() {
     echo -e "${GREEN}║${NC}                    ${BOLD}✓ Sync Complete!${NC}                         ${GREEN}║${NC}"
     echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    echo -e "${BOLD}What's New:${NC}"
+    echo -e "${BOLD}Data Location:${NC} ~/.command-center/"
+    echo ""
+    echo -e "${BOLD}What's Included:${NC}"
     echo ""
     echo -e "  ${GREEN}●${NC} ${BOLD}@lu / @lucius${NC} — AI assistant with full plugin capabilities"
     echo -e "  ${GREEN}●${NC} ${BOLD}Todo List${NC} — Persistent todos with priorities & workspace tags"
@@ -316,7 +500,7 @@ show_completion() {
     echo -e "  ${GREEN}●${NC} ${BOLD}Daily Recap${NC} — Time-aware greetings & session recaps"
     echo -e "  ${GREEN}●${NC} ${BOLD}Task Tracking${NC} — Auto-creates task files with Jira integration"
     echo -e "  ${GREEN}●${NC} ${BOLD}PR Linking${NC} — Auto-captures PR URLs from git commands"
-    echo -e "  ${GREEN}●${NC} ${BOLD}Easter Egg${NC} — Say 'batman' to @lu and see what happens 🦇"
+    echo -e "  ${GREEN}●${NC} ${BOLD}Easter Egg${NC} — Say 'batman' to @lu and see what happens"
     echo ""
     echo -e "${CYAN}Next Steps:${NC}"
     echo ""
@@ -328,12 +512,11 @@ show_completion() {
 
 main() {
     local mode="$1"
-    
+
     print_banner
-    
+
     case "$mode" in
         --plugin)
-            # Developer mode: sync from local plugin repo into CLI's .cursor/
             sync_from_plugin
             ;;
         --data)
@@ -343,11 +526,12 @@ main() {
             fix_workspace_files
             ;;
         *)
-            # Full sync: clean stale dirs, sync assets, init data, fix workspaces
-            cleanup_stale_cursor_dirs
+            migrate_data
+            cleanup_stale
             sync_assets
             init_data_files
             fix_workspace_files
+            cleanup_cli_data
             show_completion
             ;;
     esac

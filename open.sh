@@ -5,10 +5,11 @@
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACES_DIR="$SCRIPT_DIR/workspaces"
-CONTEXTS_DIR="$SCRIPT_DIR/contexts"
-CONFIG_FILE="$SCRIPT_DIR/config.json"
-LAST_FILE="$SCRIPT_DIR/.last-workspace"
+DATA_DIR="$HOME/.command-center"
+WORKSPACES_DIR="$DATA_DIR/workspaces"
+CONTEXTS_DIR="$DATA_DIR/contexts"
+CONFIG_FILE="$DATA_DIR/config.json"
+LAST_FILE="$DATA_DIR/.last-workspace"
 
 # Colors
 RED='\033[0;31m'
@@ -236,7 +237,7 @@ add_new_project() {
     local adding=true
     
     # Remember last browsed directory across sessions
-    local last_dir_file="$SCRIPT_DIR/.last-browse-dir"
+    local last_dir_file="$DATA_DIR/.last-browse-dir"
     local current_dir="${HOME}"
     if [ -f "$last_dir_file" ] && [ -d "$(cat "$last_dir_file")" ]; then
         current_dir="$(cat "$last_dir_file")"
@@ -511,11 +512,7 @@ EOF
     echo -e "${GREEN}✓${NC}  Project \"$project_name\" created with ${#all_repos[@]} repos!"
     echo -e "${GREEN}✓${NC}  Workspace: ${safe_name}.code-workspace"
     
-    # Generate architecture graph
-    echo -e "${BLUE}▶${NC}  Generating architecture graph..."
-    if "$SCRIPT_DIR/graph.sh" "$safe_name" >/dev/null 2>&1; then
-        echo -e "${GREEN}✓${NC}  Graph: docs/${safe_name}/architecture.html"
-    fi
+    echo -e "${CYAN}ℹ${NC}  To generate an architecture graph, open the workspace and ask @lu"
     echo ""
     
     echo -en "${YELLOW}?${NC} Open this project now? [Y/n]: "
@@ -525,12 +522,7 @@ EOF
         echo -e "\n${GREEN}▶${NC} Opening ${BOLD}$safe_name${NC} workspace..."
         cursor "$WORKSPACES_DIR/${safe_name}.code-workspace"
         
-        # Ask to view graph
-        echo -en "${YELLOW}?${NC} View architecture graph in browser? [y/N]: "
-        read -r view_graph
-        if [[ "$view_graph" =~ ^[Yy]$ ]]; then
-            "$SCRIPT_DIR/graph.sh" "$safe_name" --view
-        fi
+        echo ""
     fi
     
     return 0
