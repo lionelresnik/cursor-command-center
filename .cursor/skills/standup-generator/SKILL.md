@@ -1,6 +1,6 @@
 ---
 name: standup-generator
-description: Generate daily or weekly standup summaries from todos and task history. Saves summaries to ~/.command-center/standups/. Use when the user asks for a standup, recap, or at start of day/week.
+description: Generate daily or weekly standup summaries from daily logs, todos, and task history. Saves summaries to ~/.command-center/standups/. Use when the user asks for a standup, recap, or at start of day/week.
 ---
 
 # Standup Generator
@@ -29,25 +29,45 @@ When the user asks for a **weekly** standup or recap, append the current day nam
 
 **IMPORTANT: Standups are ALWAYS cross-workspace.** Read ALL workspaces, not just the current one.
 
-**IMPORTANT: ALWAYS regenerate the standup fresh from source data.** Never just display an existing saved standup file. Even if a standup file for today already exists, regenerate it from scratch by reading todos and task history — then update the file with the fresh content.
+**IMPORTANT: ALWAYS regenerate the standup fresh from source data.** Never just display an existing saved standup file. Even if a standup file for today already exists, regenerate it from scratch by reading all sources — then update the file with the fresh content.
 
-Gather information from these locations (in order):
+Gather information from these locations (in order of priority):
 
-1. **Todos** — `~/.command-center/todos.md`
-   - "Done" section: items completed since last standup → **Done**
+1. **Daily log** — `~/.command-center/daily-log/YYYY-MM-DD.jsonl` **(primary source)**
+   - Find the last working day's log: check yesterday, then day before, up to 7 days back
+   - Each line is a JSON entry: `{"time":"...","workspace":"...","ticket":"...","action":"..."}`
+   - This is the most accurate record of actual work — use it as the primary source for "Done" items
+   - Group entries by workspace for the standup
+   - De-duplicate similar entries (same workspace + ticket + similar action = one standup item)
+
+2. **Todos** — `~/.command-center/todos.md`
+   - "Done" section: items completed since last standup → **Done** (supplement daily log)
    - "In Progress" section → **Doing**
    - "Pending" section, highest priority → **Up Next**
 
-2. **Task history** — `~/.command-center/task-history/` (ALL workspace folders)
-   - Scan ALL subdirectories: `cspm/`, `supply-chain/`, `backend/`, `platform/`, `shared/`, etc.
+3. **Task history** — `~/.command-center/task-history/` (ALL workspace folders)
+   - Scan ALL subdirectories (e.g., `backend/`, `frontend/`, `infra/`, `shared/`, etc.)
    - Recent task files (last 24h for daily, last 5 work days for weekly)
    - Extract task names, PR links, completion status
+   - Use to enrich daily log entries with more context (ticket IDs, PR links)
 
-3. **Session state** — `~/.command-center/session-state.json`
+4. **Session state** — `~/.command-center/session-state.json`
    - Last session time, last workspace
 
-4. **Previous standup** — `~/.command-center/standups/` (most recent file)
+5. **Previous standup** — `~/.command-center/standups/` (most recent file)
    - Compare to detect carryover items
+
+## Finding the Right Daily Log
+
+When generating a standup, you need the **last working day's** log — not necessarily yesterday's:
+
+1. Start with yesterday's date
+2. Check if `~/.command-center/daily-log/YYYY-MM-DD.jsonl` exists
+3. If not, go back one more day. Repeat up to 7 days.
+4. Use the first log file found as the basis for "Done" items
+5. If no log file is found within 7 days, fall back to todos + task history only
+
+This handles weekends, holidays, and sick days automatically.
 
 ## How to Describe Work Items
 
@@ -55,18 +75,18 @@ Gather information from these locations (in order):
 - **What the issue/request was** (1 short sentence — what was the problem or ask?)
 - **What was done** (1 short sentence — what action was taken or completed?)
 
-### Example (Good ✅)
+### Example (Good)
 ```
-- ✅ **[cspm]** GCP onboarding script failing with `sh` vs `bash` syntax error
-  → Fixed: Updated UI to use `bash` instead of `sh`, added retry/backoff logic
-- 🔄 **[supply-chain]** Repos stuck scanning due to expired JWT tokens
-  → In progress: Added proactive JWT refresh + retry-on-401 in scanner client
+- **[backend]** Deployment script failing with `sh` vs `bash` syntax error
+  → Fixed: Updated script to use `bash`, added retry/backoff logic
+- **[frontend]** Dashboard loading stuck due to expired auth tokens
+  → In progress: Added proactive token refresh + retry-on-401 in API client
 ```
 
-### Example (Bad ❌)
+### Example (Bad)
 ```
-- ✅ Worked on PROJ-123
-- 🔄 PROJ-456 in progress
+- Worked on PROJ-123
+- PROJ-456 in progress
 ```
 
 If you don't have enough context about what the issue was, read the task file to get the TL;DR summary from the frontmatter or first paragraph.
@@ -80,17 +100,17 @@ If you don't have enough context about what the issue was, read the task file to
 
 ---
 
-## ✅ Done
+## Done
 - **[workspace]** [What the issue/request was]
   → [What was done/completed] ([PR #N](link) if available)
 
-## 🔄 In Progress
+## In Progress
 - **[workspace]** [What the issue/request was]
   → [Current status / what's being worked on]
   > **Note:** [carryover note if item was also in progress yesterday]
 
-## 📌 Up Next
-- **[workspace]** [Task description] (`⚡ high`)
+## Up Next
+- **[workspace]** [Task description] (high/medium priority)
 
 ---
 
@@ -110,13 +130,13 @@ If you don't have enough context about what the issue was, read the task file to
 ## Highlights
 - [most impactful items completed this week, with brief what/why]
 
-## ✅ Completed ([count] items)
+## Completed ([count] items)
 - **[workspace]** [What the issue was] → [What was done] ([day completed])
 
-## 🔄 Still In Progress
+## Still In Progress
 - **[workspace]** [What the issue is] → [Current status] (started [day])
 
-## 📌 Carried Over
+## Carried Over
 - **[workspace]** [items that were pending all week]
 
 ## Next Week
@@ -130,27 +150,31 @@ If you don't have enough context about what the issue was, read the task file to
 ## Generation Logic
 
 ### Daily
-1. Read `~/.command-center/todos.md`
-2. Scan ALL folders in `task-history/` (not just current workspace)
-3. For each recent task file, read the TL;DR and progress to understand what was done
-4. Read previous standup (if exists) to detect carryovers
-5. Build the standup grouped by workspace within each section
-6. Save to `~/.command-center/standups/YYYY-MM-DD.md`
-7. Display to user
+1. Find the last working day's daily log (yesterday → day before → ... up to 7 days back)
+2. Read all entries from that daily log file
+3. Read `~/.command-center/todos.md` for in-progress and pending items
+4. Scan ALL folders in `task-history/` to enrich with ticket IDs and PR links
+5. Read previous standup (if exists) to detect carryovers
+6. Group daily log entries by workspace, de-duplicate similar actions
+7. Build the standup: daily log → Done, todos in-progress → In Progress, todos pending → Up Next
+8. Save to `~/.command-center/standups/YYYY-MM-DD.md`
+9. Display to user
 
 ### Weekly
 1. Determine work week range from `preferences.workWeek` (e.g., Mon–Fri or Sun–Thu)
-2. Read all daily standups from that range
-3. If daily standups exist, aggregate them
-4. If not, fall back to todos + ALL task history for those days
-5. Save to `~/.command-center/standups/YYYY-Www.md`
-6. Display to user
+2. Read all daily log files from that range (`daily-log/YYYY-MM-DD.jsonl` for each work day)
+3. If daily logs exist, aggregate them
+4. Also read daily standup files from that range if they exist
+5. Fall back to todos + ALL task history for days with no daily log
+6. Save to `~/.command-center/standups/YYYY-Www.md`
+7. Display to user
 
 ## Smart Behaviors
 
 - **Cross-workspace always:** Never limit standup to just the current workspace — always scan all
 - **Human-readable descriptions:** Always explain what the issue was + what was done, never just ticket IDs
 - **Done items appear once:** When building the "Done" section, check the previous standup. If an item already appeared in a previous standup's "Done" section, **do not include it again**. Only show newly completed items — things that transitioned to done since the last standup. This prevents yesterday's completions from cluttering today's standup.
+- **Daily log is truth:** When the daily log exists, prefer its entries over task file analysis. The daily log captures real-time work; task files may be stale.
 - **Carryover detection:** If an item was "In Progress" yesterday and still is, note it
 - **Stale item alerts:** In progress for 3+ days → flag in Notes
 - **Empty standup:** No activity found → "Quiet day yesterday" — don't fabricate items

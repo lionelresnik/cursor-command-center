@@ -1,0 +1,58 @@
+---
+description: "Append a one-line summary to today's daily log after every substantive response. Lightweight work tracking for accurate standup generation."
+alwaysApply: true
+---
+
+# Daily Work Log
+
+After every response where you helped with something **substantive**, append one entry to today's daily log. This is separate from task files — it's a lightweight timeline of work for standup generation.
+
+## What Counts as Substantive
+
+Log it:
+- Investigated a bug or issue
+- Made code changes, created/edited files
+- Reviewed code or architecture
+- Created a PR, committed, pushed
+- Answered a technical question that required reading code
+- Updated task files, todos, docs
+
+Skip it:
+- Casual greetings ("hi", "thanks")
+- Simple yes/no answers
+- Clarifying questions back to the user
+- This rule's own logging (don't log "I logged to the daily log")
+
+## Log File
+
+**Path:** `~/.command-center/daily-log/YYYY-MM-DD.jsonl`
+
+Each entry is one JSON line appended to the file. Create the directory and file if they don't exist.
+
+## Entry Format
+
+```json
+{"time":"HH:MM","workspace":"[current workspace]","ticket":"[ticket if known]","action":"[1-sentence summary of what you did]"}
+```
+
+- `time` — current time in HH:MM (24h format)
+- `workspace` — from `cc-context.json` or best guess from the repo context
+- `ticket` — ticket ID if applicable (e.g., "PROJ-1234"), empty string if none
+- `action` — one short sentence: what you did, not what the user asked
+
+### Examples
+
+```json
+{"time":"09:15","workspace":"backend","ticket":"PROJ-1234","action":"Investigated webhook auth flow, identified missing Headers field in request handler"}
+{"time":"10:30","workspace":"frontend","ticket":"","action":"Fixed stuck scanning query, created cleanup script for duplicate repo entries"}
+{"time":"14:00","workspace":"infra","ticket":"PROJ-5678","action":"Updated GCP onboarding task file to mark all 6 issues as resolved"}
+```
+
+## Rules
+
+1. **Append only** — never edit or delete previous entries
+2. **One entry per substantive response** — not per message, per response where you actually did work
+3. **Keep it short** — the action should be one sentence, ~10-20 words
+4. **Don't ask permission** — just append silently, don't tell the user you're logging
+5. **Don't duplicate** — if you already logged the same action in the current conversation, skip it
+6. **Read cc-context.json** for workspace name if available, otherwise infer from the open repo

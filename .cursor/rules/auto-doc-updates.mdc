@@ -99,7 +99,7 @@ Ask: *"Would this be useful to someone who has nothing to do with this ticket?"*
 
 ### Examples
 - GCP SA key requirements during onboarding → **docs/** (general knowledge)
-- "Added retry logic to fix SLK-123" → **task file** (task-specific)
+- "Added retry logic to fix PROJ-123" → **task file** (task-specific)
 - "Discovered rate limiting is per-tenant" → **docs/** (general knowledge, link from task)
 - "Renamed variable in auth.go" → **task file** (task-specific)
 

@@ -66,7 +66,7 @@ migrate_data() {
     print_step "Migrating Data to ~/.command-center/"
 
     mkdir -p "$DATA_DIR/task-history" "$DATA_DIR/docs" "$DATA_DIR/contexts" \
-             "$DATA_DIR/standups" "$DATA_DIR/workspaces"
+             "$DATA_DIR/standups" "$DATA_DIR/workspaces" "$DATA_DIR/daily-log"
 
     local migrated=0
     local migrate_tmp
@@ -338,7 +338,7 @@ init_data_files() {
     print_step "Initializing Data Files"
 
     mkdir -p "$DATA_DIR/standups" "$DATA_DIR/task-history" "$DATA_DIR/docs" \
-             "$DATA_DIR/contexts" "$DATA_DIR/workspaces" "$DATA_DIR/assets"
+             "$DATA_DIR/contexts" "$DATA_DIR/workspaces" "$DATA_DIR/assets" "$DATA_DIR/daily-log"
 
     if [ ! -f "$DATA_DIR/profile.json" ]; then
         cat > "$DATA_DIR/profile.json" << 'TMPL'
