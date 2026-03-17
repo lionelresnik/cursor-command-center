@@ -5,6 +5,18 @@ description: Create, open, and manage multi-repo workspaces. Scans directories f
 
 # Workspace Manager
 
+## Determining the Current Workspace
+
+**ALWAYS read `.cursor/cc-context.json` first** to determine which workspace you're in. The `"workspace"` field tells you the current workspace name (e.g., `"platform"`, `"cspm"`, `"backend"`).
+
+```bash
+cat ~/.command-center/.cursor/cc-context.json | grep '"workspace"'
+```
+
+**DO NOT guess the workspace from open files** — a user might have `server/go.mod` open but be in the `platform` workspace, not `cspm`. The `cc-context.json` is the source of truth.
+
+When adding repos to "this workspace" or "the current workspace", use the workspace name from `cc-context.json`.
+
 ## Capabilities
 
 - Create new multi-repo workspaces (.code-workspace files)
@@ -80,12 +92,14 @@ What sounds good?
 
 ## Adding Repos to a Workspace
 
-1. Ask which workspace to modify (list available from `contexts/*.repos`)
-2. Ask for directory to scan
-3. Scan and show repos, marking ones already in the workspace
-4. User selects new repos to add
-5. Append to `contexts/[name].repos`
-6. Regenerate the .code-workspace file
+1. **Read `.cursor/cc-context.json`** to get the current workspace name
+2. If user says "add to this workspace" or "add to the current workspace", use that workspace — **don't ask**
+3. If user specifies a different workspace, use that one
+4. If unclear, ask which workspace to modify (list available from `contexts/*.repos`)
+5. Clone or locate the repo (check if it already exists in `~/Projects/`)
+6. Append to `contexts/[name].repos`
+7. Regenerate the .code-workspace file by reading the current file and adding the new entry
+8. Tell user to reload the window (`Cmd+Shift+P` → "Developer: Reload Window")
 
 ## Removing Repos
 
