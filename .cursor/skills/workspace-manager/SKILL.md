@@ -17,6 +17,18 @@ cat ~/.command-center/.cursor/cc-context.json | grep '"workspace"'
 
 When adding repos to "this workspace" or "the current workspace", use the workspace name from `cc-context.json`.
 
+## Finding Repos in the Current Workspace
+
+**DO NOT rely on `user_info.workspace_paths`** — that's a snapshot from when the window opened and may be stale after workspace modifications.
+
+Instead, **read the `.code-workspace` file directly** to see the current repos:
+
+```bash
+cat ~/.command-center/workspaces/[workspace-name].code-workspace
+```
+
+This shows the actual current state, including any repos added during this session.
+
 ## Capabilities
 
 - Create new multi-repo workspaces (.code-workspace files)
