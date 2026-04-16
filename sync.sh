@@ -241,6 +241,54 @@ MANIFEST
     print_info "This enables Command Center in Agents Window 'Home' chats"
 }
 
+check_first_run() {
+    # Check if this is a first run (no workspaces exist yet)
+    local ws_count=0
+    for ws_file in "$DATA_DIR/workspaces"/*.code-workspace; do
+        [ -f "$ws_file" ] || continue
+        ws_count=$((ws_count + 1))
+    done
+
+    if [ $ws_count -gt 0 ]; then
+        return 0
+    fi
+
+    # First run - check if user has existing workspaces elsewhere
+    print_step "First Run Detected"
+    
+    local found_workspaces=()
+    local search_dirs=("$HOME/Projects" "$HOME/Workspaces" "$HOME/Code" "$HOME/Developer")
+    
+    for dir in "${search_dirs[@]}"; do
+        if [ -d "$dir" ]; then
+            while IFS= read -r -d '' file; do
+                [[ "$file" == *"/.command-center/"* ]] && continue
+                found_workspaces+=("$file")
+            done < <(find "$dir" -maxdepth 3 -name "*.code-workspace" -print0 2>/dev/null)
+        fi
+    done
+
+    if [ ${#found_workspaces[@]} -eq 0 ]; then
+        print_info "No existing workspace files found"
+        print_info "Create your first workspace with: ${BOLD}cc setup${NC}"
+        return 0
+    fi
+
+    echo ""
+    echo -e "Found ${BOLD}${#found_workspaces[@]}${NC} existing workspace file(s) on your system."
+    echo ""
+    echo -en "${YELLOW}?${NC} Would you like to import them into Command Center? [Y/n]: "
+    read -r import_choice
+
+    if [[ "$import_choice" =~ ^[Nn] ]]; then
+        print_info "Skipped. You can import later with: cc import-workspace --scan"
+        return 0
+    fi
+
+    # Run the import script
+    "$SCRIPT_DIR/import-workspace.sh" --scan
+}
+
 sync_assets() {
     print_step "Syncing Assets"
 
@@ -650,6 +698,7 @@ main() {
             fix_workspace_files
             install_global_plugin
             cleanup_cli_data
+            check_first_run
             reopen_workspaces
             show_completion
             ;;

@@ -42,6 +42,10 @@ case "${1:-help}" in
         shift
         "$SCRIPT_DIR/manage.sh" import "$@"
         ;;
+    import-workspace|iw)
+        shift
+        "$SCRIPT_DIR/import-workspace.sh" "$@"
+        ;;
     new)
         shift
         "$SCRIPT_DIR/open.sh" --add "$@"
