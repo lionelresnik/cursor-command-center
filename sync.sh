@@ -205,6 +205,42 @@ sync_cursor_dir() {
     fi
 }
 
+install_global_plugin() {
+    print_step "Installing Global Plugin (for Home chats)"
+
+    local PLUGIN_LOCAL="$HOME/.cursor/plugins/local"
+    local PLUGIN_DEST="$PLUGIN_LOCAL/command-center"
+
+    mkdir -p "$PLUGIN_LOCAL"
+
+    # Create plugin structure from CLI's .cursor/
+    mkdir -p "$PLUGIN_DEST/.cursor-plugin"
+    mkdir -p "$PLUGIN_DEST/rules"
+    mkdir -p "$PLUGIN_DEST/skills"
+    mkdir -p "$PLUGIN_DEST/agents"
+    mkdir -p "$PLUGIN_DEST/hooks"
+
+    # Create plugin manifest
+    cat > "$PLUGIN_DEST/.cursor-plugin/plugin.json" << 'MANIFEST'
+{
+  "name": "command-center",
+  "version": "0.1.0",
+  "description": "Multi-repo workspace management with task tracking, standups, and personalization."
+}
+MANIFEST
+
+    # Copy rules, skills, agents, hooks from CLI's .cursor/
+    local count=0
+    for dir in rules skills agents hooks; do
+        if [ -d "$CURSOR_DIR/$dir" ]; then
+            cp -R "$CURSOR_DIR/$dir"/* "$PLUGIN_DEST/$dir/" 2>/dev/null && count=$((count + 1))
+        fi
+    done
+
+    print_success "Global plugin installed at ~/.cursor/plugins/local/command-center/"
+    print_info "This enables Command Center in Agents Window 'Home' chats"
+}
+
 sync_assets() {
     print_step "Syncing Assets"
 
@@ -612,6 +648,7 @@ main() {
             sync_assets
             init_data_files
             fix_workspace_files
+            install_global_plugin
             cleanup_cli_data
             reopen_workspaces
             show_completion
