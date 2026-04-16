@@ -61,15 +61,59 @@ https://github.com/user-attachments/assets/b2a4e825-a402-43ba-aec9-27f6661588db
 
 > **Note:** This project uses bash scripts. Windows users should run it inside WSL (recommended) or Git Bash.
 
-### 1️⃣ Clone & Setup
+### 1️⃣ Install
 
 ```bash
-# Clone the repo
-git clone https://github.com/lionelresnik/cursor-command-center.git
+git clone https://github.com/lionelresnik/cursor-command-center.git ~/cursor-command-center
+cd ~/cursor-command-center
+./sync.sh
+```
 
-# Run setup
-cd cursor-command-center
-./setup.sh
+**That's it!** The sync script will:
+
+1. **Set up data directories** at `~/.command-center/`
+2. **Install the global plugin** (enables `@lu` in all Cursor windows, including Agents Window "Home" chats)
+3. **Detect existing workspaces** — if you have `.code-workspace` files, it offers to import them
+4. **Create your first workspace** — if no existing workspaces found, launches the setup wizard
+
+### Already have Cursor workspaces?
+
+If you already have `.code-workspace` files you created manually, `sync.sh` will find them and ask:
+
+```
+Found 3 existing Cursor workspace(s):
+
+  ● my-project (/Users/you/Projects/my-project.code-workspace)
+  ● frontend (/Users/you/Workspaces/frontend.code-workspace)
+  ● backend (/Users/you/Code/backend.code-workspace)
+
+Importing adds Command Center to your workspaces so you get:
+  • Task tracking, todos, and standups in the sidebar
+  • @lu agent with full context of your work
+  • Your code stays exactly where it is (no files moved)
+
+? Import all 3 workspace(s)? [Y/n]: y
+```
+
+**No data is lost** — your code stays where it is. We just add `~/.command-center/` to your workspace for sidebar access.
+
+### 2️⃣ Open a Workspace
+
+```bash
+./cc open              # Show menu
+./cc open backend      # Open specific workspace
+./cc open --last       # Re-open last workspace
+```
+
+### 3️⃣ Start Using @lu
+
+In any Cursor window, type `@lu` to interact with your AI assistant:
+
+```
+@lu good morning
+@lu show my todos
+@lu standup
+@lu what did I work on yesterday?
 ```
 
 > **Note:** All @lu / @lucius AI assistant features are built-in (todos, standups, personalization, task tracking, PR linking, easter eggs).
@@ -153,26 +197,33 @@ Select a project to open:
 
 ## 🔄 Upgrading & Syncing
 
-Already have Command Center installed? Get the latest features without recreating workspaces:
+Already have Command Center installed? Get the latest features:
 
 ```bash
-cd cursor-command-center
+cd ~/cursor-command-center
 git pull
 ./sync.sh
 ```
 
 **What `sync.sh` does:**
-- ✅ Cleans up stale duplicate directories from old installs
-- ✅ Syncs assets (easter egg art, etc.)
-- ✅ Initializes new data files (profile.json, session-state.json, standups/)
-- ✅ Fixes workspace files (e.g., tilde path issues)
-- ✅ Works for existing setups — no need to recreate workspaces
+- ✅ Syncs rules, skills, agents to `~/.command-center/.cursor/`
+- ✅ Updates global plugin at `~/.cursor/plugins/local/command-center/`
+- ✅ Initializes data directories (task-history/, docs/, standups/, daily-log/)
+- ✅ Fixes workspace file paths
+- ✅ First run: detects existing workspaces and offers to import them
+- ✅ First run: launches setup wizard if no workspaces found
 
 **Partial sync options:**
 ```bash
-./sync.sh --plugin      # Developer only: sync from local plugin repo into CLI's .cursor/
+./sync.sh --plugin      # Developer only: sync from local plugin repo
 ./sync.sh --data        # Only initialize data files
 ./sync.sh --workspaces  # Only fix workspace files
+```
+
+**Import existing workspaces anytime:**
+```bash
+./cc import-workspace ~/path/to/workspace.code-workspace   # Import specific file
+./cc import-workspace --scan                                # Scan and select
 ```
 
 ---

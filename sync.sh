@@ -254,7 +254,7 @@ check_first_run() {
     fi
 
     # First run - check if user has existing workspaces elsewhere
-    print_step "First Run Detected"
+    print_step "First Run — Welcome to Command Center!"
     
     local found_workspaces=()
     local search_dirs=("$HOME/Projects" "$HOME/Workspaces" "$HOME/Code" "$HOME/Developer")
@@ -269,24 +269,49 @@ check_first_run() {
     done
 
     if [ ${#found_workspaces[@]} -eq 0 ]; then
-        print_info "No existing workspace files found"
-        print_info "Create your first workspace with: ${BOLD}cc setup${NC}"
+        echo ""
+        print_info "No existing Cursor workspaces found on your system."
+        echo ""
+        echo -e "${BOLD}Let's create your first workspace!${NC}"
+        echo ""
+        "$SCRIPT_DIR/setup.sh"
         return 0
     fi
 
     echo ""
-    echo -e "Found ${BOLD}${#found_workspaces[@]}${NC} existing workspace file(s) on your system."
+    echo -e "Found ${BOLD}${#found_workspaces[@]}${NC} existing Cursor workspace(s):"
     echo ""
-    echo -en "${YELLOW}?${NC} Would you like to import them into Command Center? [Y/n]: "
+    for file in "${found_workspaces[@]}"; do
+        local name
+        name=$(basename "$file" .code-workspace)
+        echo -e "  ${GREEN}●${NC} $name ${DIM}($file)${NC}"
+    done
+    echo ""
+    echo -e "${DIM}Importing adds Command Center to your workspaces so you get:${NC}"
+    echo -e "${DIM}  • Task tracking, todos, and standups in the sidebar${NC}"
+    echo -e "${DIM}  • @lu agent with full context of your work${NC}"
+    echo -e "${DIM}  • Your code stays exactly where it is (no files moved)${NC}"
+    echo ""
+    echo -en "${YELLOW}?${NC} Import all ${#found_workspaces[@]} workspace(s)? [Y/n]: "
     read -r import_choice
 
     if [[ "$import_choice" =~ ^[Nn] ]]; then
         print_info "Skipped. You can import later with: cc import-workspace --scan"
+        echo ""
+        echo -e "${BOLD}Let's create a new workspace instead:${NC}"
+        echo ""
+        "$SCRIPT_DIR/setup.sh"
         return 0
     fi
 
-    # Run the import script
-    "$SCRIPT_DIR/import-workspace.sh" --scan
+    # Import all workspaces
+    echo ""
+    for file in "${found_workspaces[@]}"; do
+        "$SCRIPT_DIR/import-workspace.sh" "$file"
+        echo ""
+    done
+    
+    print_success "All workspaces imported!"
 }
 
 sync_assets() {
