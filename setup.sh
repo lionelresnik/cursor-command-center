@@ -708,8 +708,6 @@ show_completion() {
             ws_name=$(basename "$ws" .code-workspace)
             [ "$ws_name" = "all" ] && continue
             [ "$ws_name" = "none" ] && continue
-            
-            fi
         fi
     done
     echo ""
