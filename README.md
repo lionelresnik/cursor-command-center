@@ -21,7 +21,7 @@ https://github.com/user-attachments/assets/b2a4e825-a402-43ba-aec9-27f6661588db
 
 | Feature | Description |
 |---------|-------------|
-| 🤖 **@lu AI Assistant** | Full-featured AI assistant with todos, standups, personalization, task tracking |
+| 🤖 **Lucius AI Assistant** | Full-featured AI assistant with todos, standups, personalization, task tracking |
 | 🔍 **Super-fast @Codebase** | All your repos indexed together for instant AI search |
 | 📁 **Project Groups** | Organize repos into contexts (Backend, Frontend, etc.) |
 | 🔄 **Deep Scanning** | Finds nested repos (5 levels deep) |
@@ -72,7 +72,7 @@ cd ~/cursor-command-center
 **That's it!** The sync script will:
 
 1. **Set up data directories** at `~/.command-center/`
-2. **Install the global plugin** (enables `@lu` in all Cursor windows, including Agents Window "Home" chats)
+2. **Install the global plugin** (enables Lucius in all Cursor windows, including Agents Window "Home" chats)
 3. **Detect existing workspaces** — if you have `.code-workspace` files, it offers to import them
 4. **Create your first workspace** — if no existing workspaces found, launches the setup wizard
 
@@ -89,7 +89,7 @@ Found 3 existing Cursor workspace(s):
 
 Importing adds Command Center to your workspaces so you get:
   • Task tracking, todos, and standups in the sidebar
-  • @lu agent with full context of your work
+  • Lucius agent with full context of your work
   • Your code stays exactly where it is (no files moved)
 
 ? Import all 3 workspace(s)? [Y/n]: y
@@ -105,18 +105,18 @@ Importing adds Command Center to your workspaces so you get:
 ./cc open --last       # Re-open last workspace
 ```
 
-### 3️⃣ Start Using @lu
+### 3️⃣ Start Using Lucius
 
-In any Cursor window, type `@lu` to interact with your AI assistant:
+In any Cursor window, talk to your AI assistant naturally — no `@` required. Say **`lu`**, **`lucius`**, or use **`/lucius`**:
 
 ```
-@lu good morning
-@lu show my todos
-@lu standup
-@lu what did I work on yesterday?
+lu good morning
+lucius show my todos
+/lucius standup
+lu what did I work on yesterday?
 ```
 
-> **Note:** All @lu / @lucius AI assistant features are built-in (todos, standups, personalization, task tracking, PR linking, easter eggs).
+> **Note:** All Lucius features are built-in (todos, standups, personalization, task tracking, PR linking, easter eggs). You can also use slash commands like `/standup`, `/todos`, and `/help` for quick access.
 
 ### 2️⃣ The Setup Wizard
 
@@ -478,7 +478,7 @@ cursor-command-center/
 ├── open.sh           # Workspace launcher
 ├── status.sh         # Git status checker
 ├── manage.sh         # Add/remove repos, export/import
-├── graph.sh          # Service dependency graph (legacy — @lu now generates natively)
+├── graph.sh          # Service dependency graph (legacy — Lucius now generates natively)
 ├── todo.sh           # Persistent todo manager
 ├── standup.sh        # Daily/weekly standup generator
 ├── help.sh           # Central help command
@@ -487,12 +487,12 @@ cursor-command-center/
 ├── workspaces/       # Generated .code-workspace files
 ├── contexts/         # Project group definitions
 │
-├── task-history/     # Work logs (by workspace) — auto-created by @lu
+├── task-history/     # Work logs (by workspace) — auto-created by Lucius
 │   ├── frontend/
 │   ├── backend/
 │   └── shared/
 │
-├── docs/             # Reference docs (by workspace) — auto-updated by @lu
+├── docs/             # Reference docs (by workspace) — auto-updated by Lucius
 │   ├── frontend/
 │   ├── backend/
 │   └── shared/
@@ -502,8 +502,8 @@ cursor-command-center/
 ├── assets/           # Static assets (easter egg art, etc.)
 │
 └── .cursor/
-    ├── rules/        # Always-on AI rules (@lu, task tracking, standups, etc.)
-    └── skills/       # @lu capabilities (workspace, graph, todos, standups, etc.)
+    ├── rules/        # Always-on AI rules (Lucius, task tracking, standups, etc.)
+    └── skills/       # Lucius capabilities (workspace, graph, todos, standups, etc.)
 ```
 
 ---
@@ -541,7 +541,7 @@ docs/                            # Reference guides (general knowledge)
 
 ### Auto-Doc Updates
 
-When `@lu` investigates something by reading source code, it automatically documents the finding in `docs/[workspace]/` — not in the task file. Findings are tagged with confidence levels:
+When Lucius investigates something by reading source code, it automatically documents the finding in `docs/[workspace]/` — not in the task file. Findings are tagged with confidence levels:
 
 - *(no tag)* — ✅ Confirmed — verified in source code or tested
 - `> ⚠️ Assumed` — inferred, not yet verified
@@ -574,7 +574,7 @@ For a marketplace plugin with the same features (and more) installed directly th
 
 The plugin provides the same capabilities as this CLI, installed through the Cursor Marketplace with no git cloning required. If both are installed, prefer the plugin — it integrates deeper with Cursor's tooling.
 
-**Migrating from CLI to plugin?** Once you install the plugin from the Marketplace, use `@lu migrate from CLI` and Lucius will guide you through removing CLI files while preserving all your data (`task-history/`, `docs/`, `todos.md`, `standups/`).
+**Migrating from CLI to plugin?** Once you install the plugin from the Marketplace, say `lu migrate from CLI` and Lucius will guide you through removing CLI files while preserving all your data (`task-history/`, `docs/`, `todos.md`, `standups/`).
 
 ---
 
